@@ -3,6 +3,8 @@
 - [x] Publish canonical Android product and engineering documentation.
 - [x] Initialize Kotlin, Jetpack Compose, Hilt, Room, Gradle wrapper, CI, and testing project foundation.
 - [x] Add Room-backed local schedule drafts with ViewModel-driven create, pause, and cancel actions.
+- [x] Add timezone-aware daily, weekly, and monthly recurrence calculation with unit coverage.
+- [x] Add exact-alarm registration with transparent waiting and permission-required schedule states.
 - [ ] Implement encrypted Room schedule persistence and migration tests.
 - [ ] Implement timezone-aware create/edit/pause/cancel schedule workflows.
 - [ ] Implement AlarmManager/WorkManager registration and permission-health evaluator.
