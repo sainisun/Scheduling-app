@@ -19,7 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportOpenHelperFactory
+import net.sqlcipher.database.SupportFactory
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,7 +48,7 @@ object DatabaseModule {
     ): SeduligmaDatabase {
         SQLiteDatabase.loadLibs(context)
         return Room.databaseBuilder(context, SeduligmaDatabase::class.java, "seduligma-secure.db")
-            .openHelperFactory(SupportOpenHelperFactory(passphraseProvider.getOrCreate()))
+            .openHelperFactory(SupportFactory(passphraseProvider.getOrCreate()))
             .fallbackToDestructiveMigrationOnDowngrade()
             .build()
     }
