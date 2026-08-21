@@ -2,6 +2,10 @@ package com.seduligma.app.feature.schedule
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -54,6 +58,7 @@ private val displayFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM · HH:mm
 fun SchedulePlannerApp() {
     val viewModel: ScheduleListViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showEditor by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -81,6 +86,23 @@ fun SchedulePlannerApp() {
             schedules = uiState.schedules,
             isLoading = uiState.isLoading,
             deviceHealth = uiState.deviceHealth,
+            onRequestExactAlarm = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    context.startActivity(
+                        Intent(
+                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                            Uri.parse("package:${context.packageName}"),
+                        ),
+                    )
+                }
+            },
+            onOpenNotificationSettings = {
+                context.startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    },
+                )
+            },
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
@@ -109,6 +131,8 @@ private fun SchedulePlannerScreen(
     schedules: List<Schedule>,
     isLoading: Boolean,
     deviceHealth: DeviceHealthReport,
+    onRequestExactAlarm: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
@@ -135,6 +159,12 @@ private fun SchedulePlannerScreen(
                         "Exact alarms: ${healthLabel(deviceHealth.exactAlarm)} · Notifications: ${healthLabel(deviceHealth.notifications)}",
                         style = MaterialTheme.typography.bodySmall,
                     )
+                    if (deviceHealth.exactAlarm == HealthState.ACTION_REQUIRED) {
+                        Button(onClick = onRequestExactAlarm) { Text("Allow exact alarms") }
+                    }
+                    if (deviceHealth.notifications != HealthState.READY) {
+                        TextButton(onClick = onOpenNotificationSettings) { Text("Open notification settings") }
+                    }
                 }
             }
         }
