@@ -7,7 +7,7 @@
 - [x] Add exact-alarm registration with transparent waiting and permission-required schedule states.
 - [x] Encrypt local Room schedule storage with SQLCipher and a Keystore-backed passphrase.
 - [ ] Implement encrypted Room schedule persistence and migration tests.
-- [ ] Implement timezone-aware create/edit/pause/cancel schedule workflows.
+- [x] Implement timezone-aware create/edit/pause/cancel schedule workflows.
 - [ ] Implement AlarmManager/WorkManager registration and permission-health evaluator.
 - [ ] Build the Node.js mobile API contract, OIDC authentication, device registration, and safe sync outbox.
 - [ ] Add transparent personal automation capability only after separate policy, permission, and device reliability review.
