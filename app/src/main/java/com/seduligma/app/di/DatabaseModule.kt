@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.seduligma.app.data.local.ScheduleDao
 import com.seduligma.app.data.local.SeduligmaDatabase
+import com.seduligma.app.data.local.DatabasePassphraseProvider
 import com.seduligma.app.data.repository.RoomScheduleRepository
 import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
 import com.seduligma.app.data.device.AndroidDeviceHealthEvaluator
@@ -17,6 +18,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import net.sqlcipher.database.SQLiteDatabase
+import net.sqlcipher.database.SupportOpenHelperFactory
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,10 +42,16 @@ abstract class RepositoryModule {
 object DatabaseModule {
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): SeduligmaDatabase =
-        Room.databaseBuilder(context, SeduligmaDatabase::class.java, "seduligma.db")
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+        passphraseProvider: DatabasePassphraseProvider,
+    ): SeduligmaDatabase {
+        SQLiteDatabase.loadLibs(context)
+        return Room.databaseBuilder(context, SeduligmaDatabase::class.java, "seduligma-secure.db")
+            .openHelperFactory(SupportOpenHelperFactory(passphraseProvider.getOrCreate()))
             .fallbackToDestructiveMigrationOnDowngrade()
             .build()
+    }
 
     @Provides
     fun provideScheduleDao(database: SeduligmaDatabase): ScheduleDao = database.scheduleDao()

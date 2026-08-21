@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons)
     implementation(libs.material.components)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.sqlcipher.android)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.hilt.android)
