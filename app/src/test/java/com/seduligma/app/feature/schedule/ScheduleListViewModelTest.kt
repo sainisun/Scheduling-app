@@ -99,6 +99,9 @@ private class FakeScheduleRepository : ScheduleRepository {
 
     override fun observeSchedules(): Flow<List<Schedule>> = schedules
 
+    override suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule> =
+        schedules.value.filter { it.state in states }
+
     override suspend fun createDraft(schedule: Schedule) {
         createdSchedules += schedule
         schedules.value = createdSchedules.toList()

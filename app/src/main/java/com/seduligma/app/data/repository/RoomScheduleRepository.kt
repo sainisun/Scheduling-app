@@ -17,6 +17,9 @@ class RoomScheduleRepository @Inject constructor(
     override fun observeSchedules(): Flow<List<Schedule>> =
         scheduleDao.observeAll().map { schedules -> schedules.map(ScheduleEntity::toDomain) }
 
+    override suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule> =
+        scheduleDao.getByStates(states.map(ScheduleState::name)).map(ScheduleEntity::toDomain)
+
     override suspend fun createDraft(schedule: Schedule) {
         scheduleDao.upsert(schedule.toEntity())
     }

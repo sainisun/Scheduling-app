@@ -11,6 +11,9 @@ interface ScheduleDao {
     @Query("SELECT * FROM schedules ORDER BY scheduledAtEpochMs ASC")
     fun observeAll(): Flow<List<ScheduleEntity>>
 
+    @Query("SELECT * FROM schedules WHERE state IN (:states) ORDER BY scheduledAtEpochMs ASC")
+    suspend fun getByStates(states: List<String>): List<ScheduleEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(schedule: ScheduleEntity)
 
