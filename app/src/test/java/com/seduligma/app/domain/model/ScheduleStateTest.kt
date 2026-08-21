@@ -7,10 +7,7 @@ import org.junit.Test
 class ScheduleStateTest {
     @Test
     fun `uncertain execution is not treated as completed`() {
-        val terminalSuccess = ScheduleState.COMPLETED
-        val uncertain = ScheduleState.UNCERTAIN
-
-        assertTrue(terminalSuccess == ScheduleState.COMPLETED)
-        assertFalse(uncertain == ScheduleState.COMPLETED)
+        assertTrue(ScheduleState.COMPLETED.isTerminalSuccess())
+        assertFalse(ScheduleState.UNCERTAIN.isTerminalSuccess())
     }
 }

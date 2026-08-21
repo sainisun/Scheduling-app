@@ -22,17 +22,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.seduligma.app.domain.model.RecurrenceRule
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.seduligma.app.domain.model.Schedule
-import com.seduligma.app.domain.model.ScheduleState
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -41,7 +37,8 @@ private val displayFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM · HH:mm
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchedulePlannerApp() {
-    var schedules by remember { mutableStateOf(seedSchedules()) }
+    val viewModel: ScheduleListViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,15 +53,7 @@ fun SchedulePlannerApp() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    schedules = schedules + Schedule(
-                        id = "local-${System.currentTimeMillis()}",
-                        title = "New schedule",
-                        messagePreview = "Schedule editor is the next feature slice.",
-                        scheduledAt = Instant.now().plusSeconds(60 * 60),
-                        timezoneId = ZoneId.systemDefault().id,
-                        recurrence = RecurrenceRule.ONCE,
-                        state = ScheduleState.DRAFT,
-                    )
+                    viewModel.createDraft()
                 },
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Create schedule")
@@ -73,7 +62,8 @@ fun SchedulePlannerApp() {
     ) { padding ->
         SchedulePlannerScreen(
             modifier = Modifier.padding(padding),
-            schedules = schedules,
+            schedules = uiState.schedules,
+            isLoading = uiState.isLoading,
         )
     }
 }
@@ -82,6 +72,7 @@ fun SchedulePlannerApp() {
 private fun SchedulePlannerScreen(
     modifier: Modifier = Modifier,
     schedules: List<Schedule>,
+    isLoading: Boolean,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -106,6 +97,11 @@ private fun SchedulePlannerScreen(
             }
         }
         item { Text("Your schedules", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+        if (isLoading) {
+            item { Text("Loading local schedules…") }
+        } else if (schedules.isEmpty()) {
+            item { Text("No schedules yet. Tap + to create your first local draft.") }
+        }
         items(schedules, key = { it.id }) { schedule ->
             ScheduleCard(schedule)
         }
@@ -130,15 +126,3 @@ private fun ScheduleCard(schedule: Schedule) {
         }
     }
 }
-
-private fun seedSchedules(): List<Schedule> = listOf(
-    Schedule(
-        id = "foundation-1",
-        title = "Permission check",
-        messagePreview = "The device-health workflow will validate notification and alarm access.",
-        scheduledAt = Instant.now().plusSeconds(60 * 60 * 24),
-        timezoneId = ZoneId.systemDefault().id,
-        recurrence = RecurrenceRule.ONCE,
-        state = ScheduleState.NEEDS_PERMISSION,
-    ),
-)

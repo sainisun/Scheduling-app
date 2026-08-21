@@ -17,6 +17,8 @@ enum class ScheduleState {
     CANCELLED,
 }
 
+fun ScheduleState.isTerminalSuccess(): Boolean = this == ScheduleState.COMPLETED
+
 enum class RecurrenceRule { ONCE, DAILY, WEEKLY, MONTHLY }
 
 data class Schedule(
