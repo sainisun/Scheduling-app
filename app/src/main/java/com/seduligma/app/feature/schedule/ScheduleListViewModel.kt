@@ -6,6 +6,8 @@ import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.Schedule
 import com.seduligma.app.domain.model.ScheduleState
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
+import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -25,6 +27,7 @@ data class ScheduleListUiState(
 @HiltViewModel
 class ScheduleListViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val scheduleAlarmRegistrar: ScheduleAlarmRegistrar,
 ) : ViewModel() {
     val uiState: StateFlow<ScheduleListUiState> = scheduleRepository.observeSchedules()
         .map { schedules -> ScheduleListUiState(schedules = schedules, isLoading = false) }
@@ -66,13 +69,25 @@ class ScheduleListViewModel @Inject constructor(
 
     fun pauseSchedule(scheduleId: String) {
         viewModelScope.launch {
+            scheduleAlarmRegistrar.cancel(scheduleId)
             scheduleRepository.updateState(scheduleId, ScheduleState.PAUSED)
         }
     }
 
     fun cancelSchedule(scheduleId: String) {
         viewModelScope.launch {
+            scheduleAlarmRegistrar.cancel(scheduleId)
             scheduleRepository.updateState(scheduleId, ScheduleState.CANCELLED)
+        }
+    }
+
+    fun activateSchedule(schedule: Schedule) {
+        viewModelScope.launch {
+            val state = when (scheduleAlarmRegistrar.register(schedule)) {
+                AlarmRegistrationResult.REGISTERED -> ScheduleState.WAITING
+                AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED -> ScheduleState.NEEDS_PERMISSION
+            }
+            scheduleRepository.updateState(schedule.id, state)
         }
     }
 }

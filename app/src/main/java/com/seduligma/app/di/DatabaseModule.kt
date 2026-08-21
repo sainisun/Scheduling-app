@@ -5,7 +5,9 @@ import androidx.room.Room
 import com.seduligma.app.data.local.ScheduleDao
 import com.seduligma.app.data.local.SeduligmaDatabase
 import com.seduligma.app.data.repository.RoomScheduleRepository
+import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -20,6 +22,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindScheduleRepository(repository: RoomScheduleRepository): ScheduleRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScheduleAlarmRegistrar(registrar: AndroidScheduleAlarmRegistrar): ScheduleAlarmRegistrar
 }
 
 @Module

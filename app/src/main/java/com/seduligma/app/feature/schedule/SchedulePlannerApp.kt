@@ -80,6 +80,7 @@ fun SchedulePlannerApp() {
             isLoading = uiState.isLoading,
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
+            onActivate = viewModel::activateSchedule,
         )
     }
     if (showEditor) {
@@ -106,6 +107,7 @@ private fun SchedulePlannerScreen(
     isLoading: Boolean,
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
+    onActivate: (Schedule) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -136,7 +138,12 @@ private fun SchedulePlannerScreen(
             item { Text("No schedules yet. Tap + to create your first local draft.") }
         }
         items(schedules, key = { it.id }) { schedule ->
-            ScheduleCard(schedule = schedule, onPause = onPause, onCancel = onCancel)
+            ScheduleCard(
+                schedule = schedule,
+                onPause = onPause,
+                onCancel = onCancel,
+                onActivate = onActivate,
+            )
         }
     }
 }
@@ -146,6 +153,7 @@ private fun ScheduleCard(
     schedule: Schedule,
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
+    onActivate: (Schedule) -> Unit,
 ) {
     val localTime = schedule.scheduledAt.atZone(ZoneId.of(schedule.timezoneId)).format(displayFormatter)
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -160,6 +168,12 @@ private fun ScheduleCard(
                 onClick = {},
                 label = { Text(schedule.state.name.lowercase().replace('_', ' ')) },
             )
+            if (schedule.state == com.seduligma.app.domain.model.ScheduleState.DRAFT ||
+                schedule.state == com.seduligma.app.domain.model.ScheduleState.NEEDS_PERMISSION ||
+                schedule.state == com.seduligma.app.domain.model.ScheduleState.PAUSED
+            ) {
+                Button(onClick = { onActivate(schedule) }) { Text("Activate") }
+            }
             if (schedule.state != com.seduligma.app.domain.model.ScheduleState.CANCELLED) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (schedule.state != com.seduligma.app.domain.model.ScheduleState.PAUSED) {

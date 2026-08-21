@@ -4,6 +4,8 @@ import com.seduligma.app.domain.model.Schedule
 import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.ScheduleState
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
+import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import com.seduligma.app.testing.MainDispatcherRule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +23,7 @@ class ScheduleListViewModelTest {
     @Test
     fun `creating a draft delegates to repository`() = runTest {
         val repository = FakeScheduleRepository()
-        val viewModel = ScheduleListViewModel(repository)
+        val viewModel = ScheduleListViewModel(repository, FakeScheduleAlarmRegistrar())
 
         viewModel.createDraft()
 
@@ -33,7 +35,7 @@ class ScheduleListViewModelTest {
     @Test
     fun `pause and cancel delegate explicit schedule states`() = runTest {
         val repository = FakeScheduleRepository()
-        val viewModel = ScheduleListViewModel(repository)
+        val viewModel = ScheduleListViewModel(repository, FakeScheduleAlarmRegistrar())
         val schedule = Schedule(
             id = "schedule-1",
             title = "Follow up",
@@ -53,6 +55,30 @@ class ScheduleListViewModelTest {
         advanceUntilIdle()
         assertEquals(ScheduleState.CANCELLED, repository.schedules.value.single().state)
     }
+
+    @Test
+    fun `activating schedule reflects exact alarm permission result`() = runTest {
+        val repository = FakeScheduleRepository()
+        val viewModel = ScheduleListViewModel(
+            repository,
+            FakeScheduleAlarmRegistrar(AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED),
+        )
+        val schedule = Schedule(
+            id = "schedule-2",
+            title = "Permission check",
+            messagePreview = "Test",
+            scheduledAt = Instant.now().plusSeconds(3600),
+            timezoneId = "UTC",
+            recurrence = RecurrenceRule.ONCE,
+            state = ScheduleState.DRAFT,
+        )
+        repository.createDraft(schedule)
+
+        viewModel.activateSchedule(schedule)
+        advanceUntilIdle()
+
+        assertEquals(ScheduleState.NEEDS_PERMISSION, repository.schedules.value.single().state)
+    }
 }
 
 private class FakeScheduleRepository : ScheduleRepository {
@@ -71,4 +97,12 @@ private class FakeScheduleRepository : ScheduleRepository {
             if (schedule.id == scheduleId) schedule.copy(state = state) else schedule
         }
     }
+}
+
+private class FakeScheduleAlarmRegistrar(
+    private val result: AlarmRegistrationResult = AlarmRegistrationResult.REGISTERED,
+) : ScheduleAlarmRegistrar {
+    override fun register(schedule: Schedule): AlarmRegistrationResult = result
+
+    override fun cancel(scheduleId: String) = Unit
 }
