@@ -49,4 +49,16 @@ class ScheduleListViewModel @Inject constructor(
             )
         }
     }
+
+    fun pauseSchedule(scheduleId: String) {
+        viewModelScope.launch {
+            scheduleRepository.updateState(scheduleId, ScheduleState.PAUSED)
+        }
+    }
+
+    fun cancelSchedule(scheduleId: String) {
+        viewModelScope.launch {
+            scheduleRepository.updateState(scheduleId, ScheduleState.CANCELLED)
+        }
+    }
 }

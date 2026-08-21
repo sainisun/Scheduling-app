@@ -64,6 +64,8 @@ fun SchedulePlannerApp() {
             modifier = Modifier.padding(padding),
             schedules = uiState.schedules,
             isLoading = uiState.isLoading,
+            onPause = viewModel::pauseSchedule,
+            onCancel = viewModel::cancelSchedule,
         )
     }
 }
@@ -73,6 +75,8 @@ private fun SchedulePlannerScreen(
     modifier: Modifier = Modifier,
     schedules: List<Schedule>,
     isLoading: Boolean,
+    onPause: (String) -> Unit,
+    onCancel: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -103,13 +107,17 @@ private fun SchedulePlannerScreen(
             item { Text("No schedules yet. Tap + to create your first local draft.") }
         }
         items(schedules, key = { it.id }) { schedule ->
-            ScheduleCard(schedule)
+            ScheduleCard(schedule = schedule, onPause = onPause, onCancel = onCancel)
         }
     }
 }
 
 @Composable
-private fun ScheduleCard(schedule: Schedule) {
+private fun ScheduleCard(
+    schedule: Schedule,
+    onPause: (String) -> Unit,
+    onCancel: (String) -> Unit,
+) {
     val localTime = schedule.scheduledAt.atZone(ZoneId.of(schedule.timezoneId)).format(displayFormatter)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -123,6 +131,14 @@ private fun ScheduleCard(schedule: Schedule) {
                 onClick = {},
                 label = { Text(schedule.state.name.lowercase().replace('_', ' ')) },
             )
+            if (schedule.state != com.seduligma.app.domain.model.ScheduleState.CANCELLED) {
+                androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (schedule.state != com.seduligma.app.domain.model.ScheduleState.PAUSED) {
+                        Button(onClick = { onPause(schedule.id) }) { Text("Pause") }
+                    }
+                    Button(onClick = { onCancel(schedule.id) }) { Text("Cancel") }
+                }
+            }
         }
     }
 }
