@@ -2,6 +2,9 @@ package com.seduligma.app.feature.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seduligma.app.domain.device.DeviceHealthEvaluator
+import com.seduligma.app.domain.device.DeviceHealthReport
+import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.Schedule
 import com.seduligma.app.domain.model.ScheduleState
@@ -22,15 +25,26 @@ import kotlinx.coroutines.launch
 data class ScheduleListUiState(
     val schedules: List<Schedule> = emptyList(),
     val isLoading: Boolean = true,
+    val deviceHealth: DeviceHealthReport = DeviceHealthReport(
+        exactAlarm = HealthState.LIMITED,
+        notifications = HealthState.LIMITED,
+    ),
 )
 
 @HiltViewModel
 class ScheduleListViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val scheduleAlarmRegistrar: ScheduleAlarmRegistrar,
+    private val deviceHealthEvaluator: DeviceHealthEvaluator,
 ) : ViewModel() {
     val uiState: StateFlow<ScheduleListUiState> = scheduleRepository.observeSchedules()
-        .map { schedules -> ScheduleListUiState(schedules = schedules, isLoading = false) }
+        .map { schedules ->
+            ScheduleListUiState(
+                schedules = schedules,
+                isLoading = false,
+                deviceHealth = deviceHealthEvaluator.evaluate(),
+            )
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

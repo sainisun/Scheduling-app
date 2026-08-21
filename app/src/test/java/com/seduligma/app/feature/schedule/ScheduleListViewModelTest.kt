@@ -4,6 +4,9 @@ import com.seduligma.app.domain.model.Schedule
 import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.ScheduleState
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.device.DeviceHealthEvaluator
+import com.seduligma.app.domain.device.DeviceHealthReport
+import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import com.seduligma.app.testing.MainDispatcherRule
@@ -23,7 +26,11 @@ class ScheduleListViewModelTest {
     @Test
     fun `creating a draft delegates to repository`() = runTest {
         val repository = FakeScheduleRepository()
-        val viewModel = ScheduleListViewModel(repository, FakeScheduleAlarmRegistrar())
+        val viewModel = ScheduleListViewModel(
+            repository,
+            FakeScheduleAlarmRegistrar(),
+            FakeDeviceHealthEvaluator(),
+        )
 
         viewModel.createDraft()
 
@@ -35,7 +42,11 @@ class ScheduleListViewModelTest {
     @Test
     fun `pause and cancel delegate explicit schedule states`() = runTest {
         val repository = FakeScheduleRepository()
-        val viewModel = ScheduleListViewModel(repository, FakeScheduleAlarmRegistrar())
+        val viewModel = ScheduleListViewModel(
+            repository,
+            FakeScheduleAlarmRegistrar(),
+            FakeDeviceHealthEvaluator(),
+        )
         val schedule = Schedule(
             id = "schedule-1",
             title = "Follow up",
@@ -62,6 +73,7 @@ class ScheduleListViewModelTest {
         val viewModel = ScheduleListViewModel(
             repository,
             FakeScheduleAlarmRegistrar(AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED),
+            FakeDeviceHealthEvaluator(),
         )
         val schedule = Schedule(
             id = "schedule-2",
@@ -105,4 +117,11 @@ private class FakeScheduleAlarmRegistrar(
     override fun register(schedule: Schedule): AlarmRegistrationResult = result
 
     override fun cancel(scheduleId: String) = Unit
+}
+
+private class FakeDeviceHealthEvaluator : DeviceHealthEvaluator {
+    override fun evaluate(): DeviceHealthReport = DeviceHealthReport(
+        exactAlarm = HealthState.READY,
+        notifications = HealthState.READY,
+    )
 }

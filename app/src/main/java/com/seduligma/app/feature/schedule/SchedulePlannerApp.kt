@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.seduligma.app.domain.device.DeviceHealthReport
+import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.model.Schedule
 import com.seduligma.app.domain.model.RecurrenceRule
 import java.time.Instant
@@ -78,6 +80,7 @@ fun SchedulePlannerApp() {
             modifier = Modifier.padding(padding),
             schedules = uiState.schedules,
             isLoading = uiState.isLoading,
+            deviceHealth = uiState.deviceHealth,
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
@@ -105,6 +108,7 @@ private fun SchedulePlannerScreen(
     modifier: Modifier = Modifier,
     schedules: List<Schedule>,
     isLoading: Boolean,
+    deviceHealth: DeviceHealthReport,
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
@@ -122,12 +126,15 @@ private fun SchedulePlannerScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("Foundation ready", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Device health", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "This initial build creates a local planner only. No message is dispatched, and no personal credentials are collected.",
+                        deviceHealthMessage(deviceHealth),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Button(onClick = {}) { Text("Open device health (next slice)") }
+                    Text(
+                        "Exact alarms: ${healthLabel(deviceHealth.exactAlarm)} · Notifications: ${healthLabel(deviceHealth.notifications)}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
         }
@@ -147,6 +154,14 @@ private fun SchedulePlannerScreen(
         }
     }
 }
+
+private fun deviceHealthMessage(report: DeviceHealthReport): String = when (report.overall) {
+    HealthState.READY -> "Your device has the permissions required for the current local scheduling beta."
+    HealthState.ACTION_REQUIRED -> "Exact alarm permission is required before a schedule can run at the selected time."
+    HealthState.LIMITED -> "Scheduling can remain limited until notifications or device permissions are enabled."
+}
+
+private fun healthLabel(state: HealthState): String = state.name.lowercase().replace('_', ' ')
 
 @Composable
 private fun ScheduleCard(

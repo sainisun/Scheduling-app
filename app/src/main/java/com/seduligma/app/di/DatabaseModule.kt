@@ -6,6 +6,8 @@ import com.seduligma.app.data.local.ScheduleDao
 import com.seduligma.app.data.local.SeduligmaDatabase
 import com.seduligma.app.data.repository.RoomScheduleRepository
 import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
+import com.seduligma.app.data.device.AndroidDeviceHealthEvaluator
+import com.seduligma.app.domain.device.DeviceHealthEvaluator
 import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.Binds
@@ -26,6 +28,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindScheduleAlarmRegistrar(registrar: AndroidScheduleAlarmRegistrar): ScheduleAlarmRegistrar
+
+    @Binds
+    @Singleton
+    abstract fun bindDeviceHealthEvaluator(evaluator: AndroidDeviceHealthEvaluator): DeviceHealthEvaluator
 }
 
 @Module
