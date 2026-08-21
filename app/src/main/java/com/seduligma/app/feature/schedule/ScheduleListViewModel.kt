@@ -34,21 +34,35 @@ class ScheduleListViewModel @Inject constructor(
             initialValue = ScheduleListUiState(),
         )
 
-    fun createDraft() {
+    fun createDraft(
+        title: String,
+        messagePreview: String,
+        scheduledAt: Instant,
+        timezoneId: String,
+        recurrence: RecurrenceRule,
+    ) {
         viewModelScope.launch {
             scheduleRepository.createDraft(
                 Schedule(
                     id = UUID.randomUUID().toString(),
-                    title = "New schedule",
-                    messagePreview = "Draft saved locally. The editor is the next feature slice.",
-                    scheduledAt = Instant.now().plusSeconds(60 * 60),
-                    timezoneId = ZoneId.systemDefault().id,
-                    recurrence = RecurrenceRule.ONCE,
+                    title = title.trim(),
+                    messagePreview = messagePreview.trim(),
+                    scheduledAt = scheduledAt,
+                    timezoneId = timezoneId,
+                    recurrence = recurrence,
                     state = ScheduleState.DRAFT,
                 ),
             )
         }
     }
+
+    fun createDraft() = createDraft(
+        title = "New schedule",
+        messagePreview = "Draft saved locally.",
+        scheduledAt = Instant.now().plusSeconds(60 * 60),
+        timezoneId = ZoneId.systemDefault().id,
+        recurrence = RecurrenceRule.ONCE,
+    )
 
     fun pauseSchedule(scheduleId: String) {
         viewModelScope.launch {
