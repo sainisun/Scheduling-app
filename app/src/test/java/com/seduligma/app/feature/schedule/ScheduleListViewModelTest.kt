@@ -107,6 +107,12 @@ private class FakeScheduleRepository : ScheduleRepository {
         schedules.value = createdSchedules.toList()
     }
 
+    override suspend fun updateSchedule(schedule: Schedule) {
+        schedules.value = schedules.value.map { current ->
+            if (current.id == schedule.id) schedule else current
+        }
+    }
+
     override suspend fun updateState(scheduleId: String, state: ScheduleState) {
         schedules.value = schedules.value.map { schedule ->
             if (schedule.id == scheduleId) schedule.copy(state = state) else schedule

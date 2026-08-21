@@ -60,6 +60,7 @@ fun SchedulePlannerApp() {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showEditor by remember { mutableStateOf(false) }
+    var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,6 +75,7 @@ fun SchedulePlannerApp() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
+                    editingSchedule = null
                     showEditor = true
                 },
             ) {
@@ -106,19 +108,37 @@ fun SchedulePlannerApp() {
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
+            onEdit = { schedule ->
+                editingSchedule = schedule
+                showEditor = true
+            },
         )
     }
     if (showEditor) {
         ScheduleEditorDialog(
-            onDismiss = { showEditor = false },
+            existing = editingSchedule,
+            onDismiss = {
+                editingSchedule = null
+                showEditor = false
+            },
             onSave = { title, message, scheduledAt, timezoneId, recurrence ->
-                viewModel.createDraft(
+                editingSchedule?.let { existing ->
+                    viewModel.updateDraft(
+                        existing = existing,
+                        title = title,
+                        messagePreview = message,
+                        scheduledAt = scheduledAt,
+                        timezoneId = timezoneId,
+                        recurrence = recurrence,
+                    )
+                } ?: viewModel.createDraft(
                     title = title,
                     messagePreview = message,
                     scheduledAt = scheduledAt,
                     timezoneId = timezoneId,
                     recurrence = recurrence,
                 )
+                editingSchedule = null
                 showEditor = false
             },
         )
@@ -136,6 +156,7 @@ private fun SchedulePlannerScreen(
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
+    onEdit: (Schedule) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -180,6 +201,7 @@ private fun SchedulePlannerScreen(
                 onPause = onPause,
                 onCancel = onCancel,
                 onActivate = onActivate,
+                onEdit = onEdit,
             )
         }
     }
@@ -199,6 +221,7 @@ private fun ScheduleCard(
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
+    onEdit: (Schedule) -> Unit,
 ) {
     val localTime = schedule.scheduledAt.atZone(ZoneId.of(schedule.timezoneId)).format(displayFormatter)
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -221,6 +244,7 @@ private fun ScheduleCard(
             }
             if (schedule.state != com.seduligma.app.domain.model.ScheduleState.CANCELLED) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { onEdit(schedule) }) { Text("Edit") }
                     if (schedule.state != com.seduligma.app.domain.model.ScheduleState.PAUSED) {
                         Button(onClick = { onPause(schedule.id) }) { Text("Pause") }
                     }
@@ -233,16 +257,22 @@ private fun ScheduleCard(
 
 @Composable
 private fun ScheduleEditorDialog(
+    existing: Schedule?,
     onDismiss: () -> Unit,
     onSave: (String, String, Instant, String, RecurrenceRule) -> Unit,
 ) {
     val context = LocalContext.current
     val timezone = remember { ZoneId.systemDefault() }
-    var title by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var dateTime by remember { mutableStateOf(LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)) }
-    var recurrence by remember { mutableStateOf(RecurrenceRule.ONCE) }
-    var validationError by remember { mutableStateOf<String?>(null) }
+    var title by remember(existing?.id) { mutableStateOf(existing?.title.orEmpty()) }
+    var message by remember(existing?.id) { mutableStateOf(existing?.messagePreview.orEmpty()) }
+    var dateTime by remember(existing?.id) {
+        mutableStateOf(
+            existing?.scheduledAt?.atZone(timezone)?.toLocalDateTime()
+                ?: LocalDateTime.now().plusHours(1).withSecond(0).withNano(0),
+        )
+    }
+    var recurrence by remember(existing?.id) { mutableStateOf(existing?.recurrence ?: RecurrenceRule.ONCE) }
+    var validationError by remember(existing?.id) { mutableStateOf<String?>(null) }
     val dateTimeText = dateTime.atZone(timezone).format(DateTimeFormatter.ofPattern("EEE, dd MMM yyyy · HH:mm"))
 
     fun openDatePicker() {
@@ -269,7 +299,7 @@ private fun ScheduleEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create local schedule") },
+        title = { Text(if (existing == null) "Create local schedule" else "Edit local schedule") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
@@ -319,7 +349,7 @@ private fun ScheduleEditorDialog(
                         else -> onSave(title, message, dateTime.atZone(timezone).toInstant(), timezone.id, recurrence)
                     }
                 },
-            ) { Text("Save draft") }
+            ) { Text(if (existing == null) "Save draft" else "Save changes") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )

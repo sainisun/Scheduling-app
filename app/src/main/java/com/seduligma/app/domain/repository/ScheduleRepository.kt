@@ -11,5 +11,7 @@ interface ScheduleRepository {
 
     suspend fun createDraft(schedule: Schedule)
 
+    suspend fun updateSchedule(schedule: Schedule)
+
     suspend fun updateState(scheduleId: String, state: com.seduligma.app.domain.model.ScheduleState)
 }

@@ -81,6 +81,29 @@ class ScheduleListViewModel @Inject constructor(
         recurrence = RecurrenceRule.ONCE,
     )
 
+    fun updateDraft(
+        existing: Schedule,
+        title: String,
+        messagePreview: String,
+        scheduledAt: Instant,
+        timezoneId: String,
+        recurrence: RecurrenceRule,
+    ) {
+        viewModelScope.launch {
+            scheduleAlarmRegistrar.cancel(existing.id)
+            scheduleRepository.updateSchedule(
+                existing.copy(
+                    title = title.trim(),
+                    messagePreview = messagePreview.trim(),
+                    scheduledAt = scheduledAt,
+                    timezoneId = timezoneId,
+                    recurrence = recurrence,
+                    state = ScheduleState.DRAFT,
+                ),
+            )
+        }
+    }
+
     fun pauseSchedule(scheduleId: String) {
         viewModelScope.launch {
             scheduleAlarmRegistrar.cancel(scheduleId)
