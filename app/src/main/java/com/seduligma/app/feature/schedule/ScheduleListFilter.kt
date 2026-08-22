@@ -39,6 +39,7 @@ object ScheduleListFilters {
             ScheduleState.BLOCKED,
         )
         ScheduleListFilter.ACTION_REQUIRED -> schedule.state in setOf(
+            ScheduleState.AWAITING_USER,
             ScheduleState.NEEDS_PERMISSION,
             ScheduleState.BLOCKED,
             ScheduleState.FAILED,

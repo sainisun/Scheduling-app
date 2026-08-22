@@ -316,6 +316,12 @@ private fun ScheduleCard(
                 onClick = {},
                 label = { Text(schedule.state.name.lowercase().replace('_', ' ')) },
             )
+            if (schedule.state == ScheduleState.AWAITING_USER) {
+                Text(
+                    "Manual confirmation is required. Review this draft yourself; Seduligma will not send anything automatically.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             if (schedule.state in setOf(ScheduleState.DRAFT, ScheduleState.NEEDS_PERMISSION, ScheduleState.PAUSED)) {
                 Button(onClick = { onActivate(schedule) }) { Text("Activate") }
             }

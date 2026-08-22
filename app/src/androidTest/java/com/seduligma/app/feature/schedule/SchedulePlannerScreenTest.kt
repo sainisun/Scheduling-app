@@ -118,4 +118,41 @@ class SchedulePlannerScreenTest {
         composeRule.onNodeWithText("Open notification settings").assertExists()
         composeRule.onNodeWithText("Refresh device health").assertExists()
     }
+
+    @Test
+    fun awaitingUserScheduleExplainsThatManualReviewIsRequired() {
+        val schedule = Schedule(
+            id = "schedule-awaiting-review",
+            title = "Review this draft",
+            messagePreview = "No automatic dispatch",
+            scheduledAt = Instant.parse("2030-01-01T09:00:00Z"),
+            timezoneId = "UTC",
+            recurrence = RecurrenceRule.ONCE,
+            state = ScheduleState.AWAITING_USER,
+        )
+        composeRule.setContent {
+            MaterialTheme {
+                SchedulePlannerScreen(
+                    schedules = listOf(schedule),
+                    totalScheduleCount = 1,
+                    searchQuery = "",
+                    selectedFilter = ScheduleListFilter.ACTION_REQUIRED,
+                    isLoading = false,
+                    deviceHealth = DeviceHealthReport(HealthState.READY, HealthState.READY),
+                    onRequestExactAlarm = {},
+                    onOpenNotificationSettings = {},
+                    onRequestNotifications = {},
+                    onRefreshDeviceHealth = {},
+                    onPause = {},
+                    onCancel = {},
+                    onActivate = {},
+                    onEdit = {},
+                    onSearchQueryChanged = {},
+                    onFilterChanged = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Manual confirmation is required. Review this draft yourself; Seduligma will not send anything automatically.").assertExists()
+    }
 }

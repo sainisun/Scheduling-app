@@ -8,7 +8,9 @@ import com.seduligma.app.data.local.DatabasePassphraseProvider
 import com.seduligma.app.data.repository.RoomScheduleRepository
 import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
 import com.seduligma.app.data.device.AndroidDeviceHealthEvaluator
+import com.seduligma.app.data.notification.AndroidManualConfirmationNotifier
 import com.seduligma.app.domain.device.DeviceHealthEvaluator
+import com.seduligma.app.domain.notification.ManualConfirmationNotifier
 import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.Binds
@@ -35,6 +37,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDeviceHealthEvaluator(evaluator: AndroidDeviceHealthEvaluator): DeviceHealthEvaluator
+
+    @Binds
+    @Singleton
+    abstract fun bindManualConfirmationNotifier(notifier: AndroidManualConfirmationNotifier): ManualConfirmationNotifier
 }
 
 @Module
