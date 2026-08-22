@@ -76,3 +76,20 @@ All requests use TLS, JSON, and `Authorization: Bearer <OIDC access token>`. API
 ## 4. Prohibited Endpoints
 
 The API must not expose `POST /send`, `POST /execute`, remote accessibility command, raw-message log retrieval, credential upload, remote device unlock, or generic arbitrary-command endpoints. These contradict the local-first, user-controlled PRD.
+
+## 5. Multi-Channel Profile Contract
+
+**Decision made here, not in PRD:** Remote configuration serves approved channel profiles for the same local Accessibility execution engine. It never sends a message through SMS, email, Telegram, or any other channel on behalf of a device.
+
+| Method/path | Auth | Request | Response | Guard |
+|---|---|---|---|---|
+| `GET /v1/remote-config/channels` | Device token | device/app metadata headers | `200 SignedChannelProfile[]` | Returns only approved, audience-compatible, unexpired profiles. |
+| `GET /v1/remote-config/channels/{channel}/current` | Device token | device/app metadata headers | `200 SignedChannelProfile` | No profile returns `404 CHANNEL_PROFILE_UNAVAILABLE`; client stays disabled. |
+| `POST /v1/admin/channel-profiles` | Admin | `{channel,targetPackage,versionRange,selectorSet,expiresAt}` | `201 DraftProfile` | Draft only; full payload never appears in general client logs. |
+| `POST /v1/admin/channel-profiles/{id}/approvals` | Different admin | `{decision}` | `200 Profile` | Maker/checker separation. |
+| `POST /v1/admin/channel-profiles/{id}/release` | Admin | `{}` | `202 Profile` | Requires signed artifact, test evidence reference, approval, audit record. |
+| `POST /v1/admin/channel-profiles/{id}/revoke` | Admin | `{reason}` | `202 Profile` | Per-channel kill switch. |
+
+`SignedChannelProfile` includes the channel, target package, compatible version range, selector-set version/hash, prefill capability, audience, issue/expiry time, signature, and rollback configuration. It does not carry free-form executable code, recipient data, raw content, timing-randomization rules, or remote send commands.
+
+The Telegram Bot API remains documented as a founder-approved alternative option only. If selected later, it requires a new versioned API section, consent/data-flow review, and explicit product decision. No existing endpoint treats it as a fallback for `TelegramAdapter`.

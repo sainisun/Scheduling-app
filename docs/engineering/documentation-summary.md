@@ -47,6 +47,8 @@ The following decisions were made to remove engineering ambiguity. Each is recor
 | Treat `uncertain` as a permanent honest outcome until the user reviews it. | Avoids falsely calling a missed/reboot-interrupted schedule a success. | System design/data model |
 | Use semantic status colours and text together. | Users must clearly understand that a local completion is not a delivery/read receipt. | Design system |
 | Require each coding agent to stop when requirements are unclear or phase-gated. | Prevents “vibe coding” from silently inventing features or bypassing guardrails. | Agent rules |
+| Use one channel-pluggable Accessibility adapter for WhatsApp, Telegram, Messenger, SMS, and Email. | Every planned personal channel follows the same local UI-automation, profile, safety, and evidence model; there is no native-SMS or direct-email exception. | System design/data model/API contract |
+| Keep Telegram Bot API as a non-default future alternative. | It needs a separate founder-approved product, consent, data-flow, and API-contract decision; it is never a silent fallback. | System design/API contract/implementation plan |
 
 ## 4. Cross-Document Consistency Check
 
@@ -61,6 +63,7 @@ The following decisions were made to remove engineering ambiguity. Each is recor
 | Phase 2—not Phase 5—automation sequencing | **Consistent** | PRD, architecture, implementation plan, agent rules, onboarding, and decisions register all place policy-gated automation immediately after Phase 1 local beta and before Phase 4 commercial platform work. |
 | No blind UI interaction | **Consistent** | PRD, system error rules, agent rules, test plan, and Phase 2 plan require aborting as `failed`/`uncertain` when expected state cannot be verified. |
 | Backend remains non-sender | **Consistent** | Architecture and API contract prohibit send/unlock/arbitrary device-command endpoints. |
+| Uniform multi-channel execution | **Consistent** | WhatsApp, Telegram, Messenger, SMS, and Email all use the same Phase 2 policy-gated local Accessibility adapter model and can report only local UI-verified evidence. |
 
 No inconsistency was found, so no source document was changed as part of this review.
 

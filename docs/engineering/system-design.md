@@ -107,3 +107,39 @@ sequenceDiagram
 | SD-02 | Use UUID identifiers across backend; text UUID locally. | This document | Offline generation and sync without ID collision. |
 | SD-03 | Backend accepts sync metadata by default, not raw schedule content. | PRD v2.1 principle implemented here | Privacy-by-default and local execution source of truth. |
 | SD-04 | Separate execution lease from schedule record. | This document | Enables atomic single-lane enforcement and reboot recovery. |
+
+## 8. Uniform Multi-Channel Execution Design
+
+**Decision made here, not in PRD:** Every planned personal-messaging channel uses the same local, policy-gated Accessibility execution architecture. The supported channel set is `WHATSAPP`, `TELEGRAM`, `MESSENGER`, `SMS_APP`, and `EMAIL_APP`. This is one mechanism with channel profiles, not five independent native/API integration paths.
+
+```kotlin
+interface ExecutionAdapter {
+    val channel: Channel
+    fun evaluateReadiness(schedule: Schedule, profile: ChannelProfile): ReadinessResult
+    suspend fun prepare(schedule: Schedule, profile: ChannelProfile): PrepareResult
+    suspend fun executeVerifiedFinalAction(
+        schedule: Schedule,
+        profile: ChannelProfile,
+        lease: ExecutionLease,
+    ): ExecutionResult
+    fun cancelOrAbort(reason: ScheduleReasonCode)
+}
+```
+
+| Adapter | Target application examples | Common execution rules |
+|---|---|---|
+| `WhatsAppAdapter` | WhatsApp, WhatsApp Business where separately profiled | Verified prefilled-chat route where available, then static final-action flow. |
+| `TelegramAdapter` | Telegram app | Same readiness, selector verification, single lane, safe abort, and local-evidence rules. |
+| `MessengerAdapter` | Facebook Messenger | Same readiness, selector verification, single lane, safe abort, and local-evidence rules. |
+| `SmsAppAdapter` | Google Messages, Samsung Messages, other separately profiled apps | UI automation only; no `SmsManager` send path in this product design. |
+| `EmailAppAdapter` | Gmail, Outlook, other separately profiled apps | UI automation only; no Gmail OAuth/direct-send path in this product design. |
+
+`ChannelProfile` is a signed, versioned, audience-scoped remote configuration record. It identifies the target package, known compatible app/version family, required device/app state, safe intent/preparation capability, selector identifiers, expiry, and rollback/kill-switch scope. It is not an arbitrary script runner and cannot introduce unreviewed actions.
+
+Each channel profile follows the identical Phase 2 gate: distribution decision, Accessibility declaration, prominent disclosure, affirmative consent, no-blind-action validation, signed configuration, supported-device/app matrix, kill switch, and controlled beta evidence. A channel may be absent or disabled until its individual profile has passed those gates; uniform architecture does not imply simultaneous release of every target application.
+
+`TELEGRAM_BOT_API` is a documented future alternative for a founder-approved lower-risk Telegram route. It is not the default product path, is not substituted silently for `TelegramAdapter`, and requires a separately approved API/content/data contract if selected.
+
+All adapters share the same state machine and error taxonomy. None may report delivery, read, or recipient consumption based on UI automation. Valid outcomes remain local evidence only: prepared, final action verified, failed, or uncertain.
+
+Add the following channel-neutral error codes: `CHANNEL_PROFILE_UNAVAILABLE`, `CHANNEL_APP_UNSUPPORTED`, `CHANNEL_APP_VERSION_UNTESTED`, `CHANNEL_SELECTOR_MISMATCH`, `CHANNEL_COMPOSE_UI_NOT_READY`, and `CHANNEL_FINAL_ACTION_UNVERIFIED`. Their terminal state is `blocked`, `failed`, or `uncertain` according to the existing transition table; no adapter may invent a success result.

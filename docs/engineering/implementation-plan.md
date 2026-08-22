@@ -41,6 +41,22 @@ Each task maps to PRD v2.1 requirements. Agents complete tasks in order unless a
 
 **Phase 2 exit gate:** policy/disclosure package approved; every supported-device execution path verifies state or aborts safely; no blind action; logs are redacted; controlled beta evidence is reviewed.
 
+### Phase 2 Channel-Pluggable Work Breakdown
+
+| ID | Task | Dependencies | Acceptance criteria |
+|---|---|---|---|
+| P2-09 | Implement shared `ExecutionAdapter` contract and channel-neutral evidence/error model | P2-01..03 | No channel-specific state machine; all adapters return canonical outcomes/reason codes. |
+| P2-10 | Implement verified signed `ChannelProfile` loading and per-channel kill switch | P2-07, P2-09 | Invalid/expired/audience-mismatched profiles disable safely; no arbitrary code payload. |
+| P2-11 | Implement and test WhatsApp channel profile | P2-04..07, P2-10 | Supported-device/app matrix and prefill/final-action safe-abort evidence. |
+| P2-12 | Implement and test Telegram channel profile | P2-09..10 | Identical declaration/consent/disclosure/testing gate; no Bot API fallback. |
+| P2-13 | Implement and test Messenger channel profile | P2-09..10 | Identical declaration/consent/disclosure/testing gate. |
+| P2-14 | Implement and test SMS-app profiles | P2-09..10 | Separate Google Messages/Samsung Messages profiles; no `SmsManager` path. |
+| P2-15 | Implement and test email-app profiles | P2-09..10 | Separate Gmail/Outlook profiles; no Gmail OAuth/direct-email path. |
+
+P2-11 through P2-15 may be released one at a time after the identical gate passes for that application profile. This preserves a uniform mechanism and uniform controls without assuming all target apps are equally stable or compatible on day one.
+
+**Telegram alternative:** A future Telegram Bot API route may be evaluated only after founder approval. It is not a Phase 2 fallback, does not change the default adapter architecture, and requires its own product, consent, data, and API-contract decision.
+
 ## Phase 3 — Feature Expansion
 
 Add only one vertical slice at a time: templates, media, CSV/lists, groups, Status, or deterministic static rules. Each needs written acceptance criteria, content/privacy analysis, device compatibility tests, and rollback plan before implementation.

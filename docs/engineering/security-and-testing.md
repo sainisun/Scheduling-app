@@ -60,3 +60,19 @@ Tier D does not ship without a dedicated threat-model review. Assets include any
 ## References
 
 [1]: https://support.google.com/googleplay/android-developer/answer/10964491?hl=en-GB "Google Play — Use of the AccessibilityService API"
+
+## 6. Uniform Multi-Channel Accessibility Test Matrix
+
+Every channel uses the same Phase 2 security/policy gate and the same local-evidence rule. The app must not claim a richer delivery/read result for SMS or email merely because native protocols could expose such information; this product executes through the target app UI and reports only what the local workflow can verify.
+
+| Channel/app family | Required profile/device coverage | Required failure tests |
+|---|---|---|
+| WhatsApp / WhatsApp Business | Supported WhatsApp family and app versions on each approved OEM | Prefill target mismatch, chat not opened, final action not verified, dual-app ambiguity. |
+| Telegram | Supported Telegram app version on each approved OEM | Search/compose state absent, selector change, draft not present, final action unverified. |
+| Messenger | Supported Messenger version on each approved OEM | Login/interstitial, composer unavailable, selector change, final action unverified. |
+| SMS app | Google Messages and Samsung Messages as separate profiles; do not treat “SMS” as one UI | Default-SMS-app change, compose unavailable, permission/role UI interference, selector mismatch. |
+| Email app | Gmail and Outlook as separate profiles; do not treat “Email” as one UI | Account chooser, attachment not ready, compose unavailable, selector mismatch, final action unverified. |
+
+For each profile, test: first install; consent declined/accepted/withdrawn; exact alarm granted/revoked; notifications denied/regranted; app force-stop/restart; reboot around due time; low storage/network interruption; target app version outside profile range; selector mismatch; concurrent schedules; user interrupt; kill switch; and rollback to the last known-good profile.
+
+Automation must remain deterministic and static: a human creates the schedule and channel; the profile supplies only approved target-state identification; the client aborts when expected UI evidence is missing. Google Play permits deterministic, rule-based automation but prohibits Accessibility use that autonomously initiates, plans, and executes actions or decisions.[1]

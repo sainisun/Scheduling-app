@@ -67,3 +67,32 @@ type RecipientReference = {
 ## Naming Rules
 
 Use singular domain names in code (`Schedule`, `Device`, `ConsentReceipt`), plural table/collection names in storage (`schedules`, `devices`, `consent_receipts`), and lower snake case for SQL columns. Avoid alternate names such as “job”, “task”, “send”, or “message” when the correct concept is `Schedule`.
+
+## Multi-Channel Addendum
+
+**Decision made here, not in PRD:** A `Schedule` carries a `channel` and resolves to a local signed `ChannelProfile`; it does not branch into native-SMS or direct-email entity families.
+
+```ts
+type Channel =
+  | "WHATSAPP"
+  | "TELEGRAM"
+  | "MESSENGER"
+  | "SMS_APP"
+  | "EMAIL_APP";
+
+type ChannelProfile = {
+  id: string;
+  channel: Channel;
+  targetPackage: string;
+  compatibleAppVersionRange: string;
+  selectorSetVersion: string;
+  prefillCapability: "SUPPORTED" | "NOT_SUPPORTED";
+  status: "DRAFT" | "APPROVED" | "RELEASED" | "REVOKED";
+  expiresAtUtcMs: number;
+  signature: string;
+};
+```
+
+`Schedule.recipientReference` is channel-specific but always local-only by default. An SMS reference is a user-selected target in a profiled SMS app; an email reference is a user-selected target in a profiled email app. Neither creates permission for protocol-level sending, server delivery receipts, or a backend copy of recipient content.
+
+The local database adds `channel` to `schedule`, `channel_profile_id` and `channel_profile_version` to `schedule_event`, and `channel_profile_cache` for verified signed profiles. The backend remote-config metadata stores profile hashes, lifecycle, approval, audience, and revocation information—not raw selectors in telemetry and not message/recipient data.
