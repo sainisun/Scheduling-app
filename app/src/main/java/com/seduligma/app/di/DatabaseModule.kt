@@ -3,15 +3,18 @@ package com.seduligma.app.di
 import android.content.Context
 import androidx.room.Room
 import com.seduligma.app.data.local.ScheduleDao
+import com.seduligma.app.data.local.ScheduleEventDao
 import com.seduligma.app.data.local.SeduligmaDatabase
 import com.seduligma.app.data.local.DatabasePassphraseProvider
 import com.seduligma.app.data.repository.RoomScheduleRepository
+import com.seduligma.app.data.repository.RoomScheduleEventRepository
 import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
 import com.seduligma.app.data.device.AndroidDeviceHealthEvaluator
 import com.seduligma.app.data.notification.AndroidManualConfirmationNotifier
 import com.seduligma.app.domain.device.DeviceHealthEvaluator
 import com.seduligma.app.domain.notification.ManualConfirmationNotifier
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.repository.ScheduleEventRepository
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.Binds
 import dagger.Module
@@ -29,6 +32,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindScheduleRepository(repository: RoomScheduleRepository): ScheduleRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScheduleEventRepository(repository: RoomScheduleEventRepository): ScheduleEventRepository
 
     @Binds
     @Singleton
@@ -55,10 +62,14 @@ object DatabaseModule {
         SQLiteDatabase.loadLibs(context)
         return Room.databaseBuilder(context, SeduligmaDatabase::class.java, "seduligma-secure.db")
             .openHelperFactory(SupportFactory(passphraseProvider.getOrCreate()))
+            .addMigrations(SeduligmaDatabase.MIGRATION_1_2)
             .fallbackToDestructiveMigrationOnDowngrade()
             .build()
     }
 
     @Provides
     fun provideScheduleDao(database: SeduligmaDatabase): ScheduleDao = database.scheduleDao()
+
+    @Provides
+    fun provideScheduleEventDao(database: SeduligmaDatabase): ScheduleEventDao = database.scheduleEventDao()
 }

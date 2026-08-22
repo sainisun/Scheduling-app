@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.seduligma.app.MainActivity
+import com.seduligma.app.domain.notification.ManualConfirmationNotificationResult
 import com.seduligma.app.domain.notification.ManualConfirmationNotifier
 import com.seduligma.app.receiver.NotificationChannels
 import com.seduligma.app.receiver.ScheduleAlarmReceiver
@@ -17,8 +18,10 @@ import javax.inject.Singleton
 class AndroidManualConfirmationNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ManualConfirmationNotifier {
-    override fun showScheduleReady(scheduleId: String) {
-        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+    override fun showScheduleReady(scheduleId: String): ManualConfirmationNotificationResult {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            return ManualConfirmationNotificationResult.NOTIFICATIONS_DISABLED
+        }
 
         NotificationChannels.ensureCreated(context)
         val reviewIntent = Intent(context, MainActivity::class.java).apply {
@@ -44,6 +47,7 @@ class AndroidManualConfirmationNotifier @Inject constructor(
                 .setAutoCancel(true)
                 .build(),
         )
+        return ManualConfirmationNotificationResult.POSTED
     }
 
     companion object {

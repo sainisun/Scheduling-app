@@ -51,8 +51,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.seduligma.app.domain.device.DeviceHealthReport
 import com.seduligma.app.domain.device.HealthState
+import com.seduligma.app.domain.model.LocalEvidence
 import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.Schedule
+import com.seduligma.app.domain.model.ScheduleEvent
+import com.seduligma.app.domain.model.ScheduleEventType
 import com.seduligma.app.domain.model.ScheduleState
 import java.time.Instant
 import java.time.LocalDateTime
@@ -107,6 +110,7 @@ fun SchedulePlannerApp() {
         SchedulePlannerScreen(
             modifier = Modifier.padding(padding),
             schedules = uiState.schedules,
+            recentEvents = uiState.recentEvents,
             totalScheduleCount = uiState.totalScheduleCount,
             searchQuery = uiState.searchQuery,
             selectedFilter = uiState.selectedFilter,
@@ -188,6 +192,7 @@ fun SchedulePlannerApp() {
 internal fun SchedulePlannerScreen(
     modifier: Modifier = Modifier,
     schedules: List<Schedule>,
+    recentEvents: List<ScheduleEvent> = emptyList(),
     totalScheduleCount: Int,
     searchQuery: String,
     selectedFilter: ScheduleListFilter,
@@ -284,7 +289,46 @@ internal fun SchedulePlannerScreen(
                 onEdit = onEdit,
             )
         }
+        if (recentEvents.isNotEmpty()) {
+            item {
+                Text("Recent activity", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+            items(recentEvents, key = { it.id }) { event ->
+                ScheduleEventCard(event)
+            }
+        }
     }
+}
+
+@Composable
+private fun ScheduleEventCard(event: ScheduleEvent) {
+    val occurredAt = event.occurredAt.atZone(ZoneId.systemDefault()).format(displayFormatter)
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(eventTitle(event.eventType), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(eventEvidenceMessage(event), style = MaterialTheme.typography.bodySmall)
+            Text(occurredAt, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+private fun eventTitle(eventType: ScheduleEventType): String = when (eventType) {
+    ScheduleEventType.CREATED -> "Draft created"
+    ScheduleEventType.ACTIVATED -> "Schedule activated"
+    ScheduleEventType.PAUSED -> "Schedule paused"
+    ScheduleEventType.CANCELLED -> "Schedule cancelled"
+    ScheduleEventType.ATTEMPTED -> "Schedule attempt recorded"
+    ScheduleEventType.OUTCOME_RECORDED -> "Schedule outcome recorded"
+}
+
+private fun eventEvidenceMessage(event: ScheduleEvent): String = when (event.localEvidence) {
+    LocalEvidence.NOTIFICATION_POSTED -> "Local evidence: a review notification was posted. This does not prove a message was sent."
+    LocalEvidence.USER_CONFIRMED -> "Local evidence: the user confirmed a local action. This does not prove delivery or read status."
+    LocalEvidence.ALARM_REGISTERED -> "Local evidence: the device alarm was registered."
+    LocalEvidence.NONE -> event.reasonCode?.name?.lowercase()?.replace('_', ' ') ?: "No local evidence was available."
 }
 
 private fun deviceHealthMessage(report: DeviceHealthReport): String = when (report.overall) {

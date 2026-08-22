@@ -6,8 +6,13 @@ import com.seduligma.app.domain.device.DeviceHealthEvaluator
 import com.seduligma.app.domain.device.DeviceHealthReport
 import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.model.RecurrenceRule
+import com.seduligma.app.domain.model.LocalEvidence
 import com.seduligma.app.domain.model.Schedule
+import com.seduligma.app.domain.model.ScheduleEvent
+import com.seduligma.app.domain.model.ScheduleEventType
+import com.seduligma.app.domain.model.ScheduleReasonCode
 import com.seduligma.app.domain.model.ScheduleState
+import com.seduligma.app.domain.repository.ScheduleEventRepository
 import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
@@ -25,6 +30,7 @@ import kotlinx.coroutines.launch
 
 data class ScheduleListUiState(
     val schedules: List<Schedule> = emptyList(),
+    val recentEvents: List<ScheduleEvent> = emptyList(),
     val totalScheduleCount: Int = 0,
     val searchQuery: String = "",
     val selectedFilter: ScheduleListFilter = ScheduleListFilter.ALL,
@@ -38,6 +44,7 @@ data class ScheduleListUiState(
 @HiltViewModel
 class ScheduleListViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val scheduleEventRepository: ScheduleEventRepository,
     private val scheduleAlarmRegistrar: ScheduleAlarmRegistrar,
     private val deviceHealthEvaluator: DeviceHealthEvaluator,
 ) : ViewModel() {
@@ -45,8 +52,9 @@ class ScheduleListViewModel @Inject constructor(
 
     val uiState: StateFlow<ScheduleListUiState> = combine(
         scheduleRepository.observeSchedules(),
+        scheduleEventRepository.observeEvents(),
         controls,
-    ) { schedules, currentControls ->
+    ) { schedules, events, currentControls ->
             ScheduleListUiState(
                 schedules = ScheduleListFilters.apply(
                     schedules = schedules,
@@ -54,6 +62,7 @@ class ScheduleListViewModel @Inject constructor(
                     filter = currentControls.selectedFilter,
                 ),
                 totalScheduleCount = schedules.size,
+                recentEvents = events,
                 searchQuery = currentControls.searchQuery,
                 selectedFilter = currentControls.selectedFilter,
                 isLoading = false,
@@ -86,17 +95,17 @@ class ScheduleListViewModel @Inject constructor(
         recurrence: RecurrenceRule,
     ) {
         viewModelScope.launch {
-            scheduleRepository.createDraft(
-                Schedule(
-                    id = UUID.randomUUID().toString(),
-                    title = title.trim(),
-                    messagePreview = messagePreview.trim(),
-                    scheduledAt = scheduledAt,
-                    timezoneId = timezoneId,
-                    recurrence = recurrence,
-                    state = ScheduleState.DRAFT,
-                ),
+            val schedule = Schedule(
+                id = UUID.randomUUID().toString(),
+                title = title.trim(),
+                messagePreview = messagePreview.trim(),
+                scheduledAt = scheduledAt,
+                timezoneId = timezoneId,
+                recurrence = recurrence,
+                state = ScheduleState.DRAFT,
             )
+            scheduleRepository.createDraft(schedule)
+            recordEvent(schedule.id, ScheduleEventType.CREATED, LocalEvidence.NONE)
         }
     }
 
@@ -135,6 +144,7 @@ class ScheduleListViewModel @Inject constructor(
         viewModelScope.launch {
             scheduleAlarmRegistrar.cancel(scheduleId)
             scheduleRepository.updateState(scheduleId, ScheduleState.PAUSED)
+            recordEvent(scheduleId, ScheduleEventType.PAUSED, LocalEvidence.NONE)
         }
     }
 
@@ -142,17 +152,51 @@ class ScheduleListViewModel @Inject constructor(
         viewModelScope.launch {
             scheduleAlarmRegistrar.cancel(scheduleId)
             scheduleRepository.updateState(scheduleId, ScheduleState.CANCELLED)
+            recordEvent(
+                scheduleId,
+                ScheduleEventType.CANCELLED,
+                LocalEvidence.NONE,
+                ScheduleReasonCode.USER_CANCELLED_CONFIRMATION,
+            )
         }
     }
 
     fun activateSchedule(schedule: Schedule) {
         viewModelScope.launch {
-            val state = when (scheduleAlarmRegistrar.register(schedule)) {
-                AlarmRegistrationResult.REGISTERED -> ScheduleState.WAITING
-                AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED -> ScheduleState.NEEDS_PERMISSION
+            when (scheduleAlarmRegistrar.register(schedule)) {
+                AlarmRegistrationResult.REGISTERED -> {
+                    scheduleRepository.updateState(schedule.id, ScheduleState.WAITING)
+                    recordEvent(schedule.id, ScheduleEventType.ACTIVATED, LocalEvidence.ALARM_REGISTERED)
+                }
+                AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED -> {
+                    scheduleRepository.updateState(schedule.id, ScheduleState.NEEDS_PERMISSION)
+                    recordEvent(
+                        schedule.id,
+                        ScheduleEventType.OUTCOME_RECORDED,
+                        LocalEvidence.NONE,
+                        ScheduleReasonCode.EXACT_ALARM_DENIED,
+                    )
+                }
             }
-            scheduleRepository.updateState(schedule.id, state)
         }
+    }
+
+    private suspend fun recordEvent(
+        scheduleId: String,
+        eventType: ScheduleEventType,
+        evidence: LocalEvidence,
+        reasonCode: ScheduleReasonCode? = null,
+    ) {
+        scheduleEventRepository.recordEvent(
+            ScheduleEvent(
+                id = UUID.randomUUID().toString(),
+                scheduleId = scheduleId,
+                eventType = eventType,
+                localEvidence = evidence,
+                reasonCode = reasonCode,
+                occurredAt = Instant.now(),
+            ),
+        )
     }
 }
 

@@ -9,6 +9,9 @@ import com.seduligma.app.domain.device.DeviceHealthReport
 import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.model.RecurrenceRule
 import com.seduligma.app.domain.model.Schedule
+import com.seduligma.app.domain.model.ScheduleEvent
+import com.seduligma.app.domain.model.ScheduleEventType
+import com.seduligma.app.domain.model.LocalEvidence
 import com.seduligma.app.domain.model.ScheduleState
 import java.time.Instant
 import org.junit.Rule
@@ -154,5 +157,42 @@ class SchedulePlannerScreenTest {
         }
 
         composeRule.onNodeWithText("Manual confirmation is required. Review this draft yourself; Seduligma will not send anything automatically.").assertExists()
+    }
+
+    @Test
+    fun recentActivityShowsOnlyLocalNotificationEvidence() {
+        val event = ScheduleEvent(
+            id = "event-1",
+            scheduleId = "schedule-1",
+            eventType = ScheduleEventType.OUTCOME_RECORDED,
+            localEvidence = LocalEvidence.NOTIFICATION_POSTED,
+            occurredAt = Instant.parse("2030-01-01T09:00:00Z"),
+        )
+        composeRule.setContent {
+            MaterialTheme {
+                SchedulePlannerScreen(
+                    schedules = emptyList(),
+                    recentEvents = listOf(event),
+                    totalScheduleCount = 0,
+                    searchQuery = "",
+                    selectedFilter = ScheduleListFilter.ALL,
+                    isLoading = false,
+                    deviceHealth = DeviceHealthReport(HealthState.READY, HealthState.READY),
+                    onRequestExactAlarm = {},
+                    onOpenNotificationSettings = {},
+                    onRequestNotifications = {},
+                    onRefreshDeviceHealth = {},
+                    onPause = {},
+                    onCancel = {},
+                    onActivate = {},
+                    onEdit = {},
+                    onSearchQueryChanged = {},
+                    onFilterChanged = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Recent activity").assertExists()
+        composeRule.onNodeWithText("Local evidence: a review notification was posted. This does not prove a message was sent.").assertExists()
     }
 }
