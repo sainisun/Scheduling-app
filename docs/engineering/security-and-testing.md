@@ -32,6 +32,22 @@
 | Phase 2 | Consent withdrawn | Execution adapter disabled, config/data access reduced as specified. |
 | Remote config | Invalid/expired/wrong-audience signature | Client rejects artifact, keeps last known good config. |
 
+### 2.1 Phase 1 Device-Evidence Matrix
+
+The P1-06 matrix measures device evidence, not marketing reach. A device is never called “tested” without a retained result that identifies the device or profile, OS version, Seduligma commit/build, test method, observed result, and any restriction or failure. The labels below are mutually distinct and must never be merged into one generic “verified” statement.
+
+| Device/OEM lane | Required method | Current documented status | Beta decision rule |
+|---|---|---|---|
+| Vivo / FuntouchOS | Founder physically executes `vivo-funtouchos-p1-06-runbook.md` and retains the evidence record. | **Not yet verified** until that run is recorded. | May be listed as supported only for the exact documented model/OS/app build after pass criteria are met. |
+| Stock/Pixel Android emulator | Android Studio or CI emulator baseline run. | **Not yet verified** until its profile and artifacts are recorded. | Useful baseline only; never substitutes for OEM battery/autostart evidence. |
+| Samsung | Named real device through physical access or a retained cloud-device-farm result. | **Not yet verified** unless retained evidence exists. | Exclude from beta support claims until its own lane passes. |
+| Xiaomi / Redmi / POCO | Named real device through physical access or a retained cloud-device-farm result. | **Not yet verified** unless retained evidence exists. | Exclude from beta support claims until its own lane passes. |
+| Any other OEM/model | Deliberate future verification method. | **Not yet verified**. | Must not be inferred from a neighboring OEM result. |
+
+For every real-device lane, test the normal flow and the failure/recovery conditions that matter to this Phase 1 local scheduler: creation/edit/pause/cancel/reactivation; exact-alarm absent/granted/revoked; notification denied/regranted; due-time manual-confirmation notification; reboot before due time; reboot near due time; local evidence/history; local erase/reset; and a background/battery-restriction observation. A failed or ambiguous result is evidence, not a reason to relabel the result as passing. It must name the user-visible symptom and any system setting the founder had to change.
+
+Cloud-device-farm runs can provide real-remote-hardware evidence for the exact selected model and OS, but the provider’s live catalog, capacity, session limits, and quota apply. Firebase Test Lab’s Spark allowance is currently up to 10 virtual-device and 5 physical-device test runs per project per day; the Blaze plan includes daily no-cost testing time before its listed per-device-hour charges. Test Lab publishes device-capacity and reduced-stability indicators, which must be recorded when they affect a result.[2] [3]
+
 ## 3. Tier D Threat Model (Deferred but Required)
 
 Tier D does not ship without a dedicated threat-model review. Assets include any credential-equivalent local material, device state, schedule content, and recovery controls. Threats include rooted/debuggable devices, local malware, backups, screenshots, logs, memory extraction, lost devices, compromised remote config, confused consent, unsupported locks, and incorrect unlock state. Required mitigations are: no server transfer; Android Keystore-backed protection; backup exclusion; no log/analytics inclusion; explicit opt-in/out; clear local deletion; fail-closed on unsupported conditions; independent penetration/security review; device matrix evidence; and a remote feature kill switch that disables only the feature, never controls the device.
@@ -60,6 +76,8 @@ Tier D does not ship without a dedicated threat-model review. Assets include any
 ## References
 
 [1]: https://support.google.com/googleplay/android-developer/answer/10964491?hl=en-GB "Google Play — Use of the AccessibilityService API"
+[2]: https://firebase.google.com/docs/test-lab/usage-quotas-pricing "Firebase Test Lab — Usage levels, quotas, and pricing"
+[3]: https://firebase.google.com/docs/test-lab/android/available-testing-devices "Firebase Test Lab — Available testing devices"
 
 ## 6. Uniform Multi-Channel Accessibility Test Matrix
 

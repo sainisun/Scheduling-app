@@ -21,10 +21,27 @@ Each task maps to PRD v2.1 requirements. Agents complete tasks in order unless a
 | P1-03 | Ask Me Before Sending notification action | P0-05 | FR-12 Beta 1 manual-confirmation path; no credential persistence. |
 | P1-04 | Local evidence/event history | P0-03 | NFR-02; every outcome shows known evidence/reason. |
 | P1-05 | Migration, backup exclusion, delete/reset tests | P0-02 | PRD Section 8; secure local retention/deletion. |
-| P1-06 | Physical device matrix run | P1-01..05 | PRD Section 12: supported Pixel, Samsung, Xiaomi/Redmi/POCO results. |
+| P1-06 | Tiered device-evidence matrix run | P1-01..05 | PRD Section 12: record each result as **real-device verified**, **emulator-verified**, **cloud-device-farm verified**, or **not yet verified**. Vivo/FuntouchOS is the founder’s required real-device lane; stock/Pixel Android emulators are a baseline-only lane; Samsung and Xiaomi/Redmi/POCO require cloud-farm evidence or an explicit unverified label. Follow `docs/engineering/vivo-funtouchos-p1-06-runbook.md`. |
 | P1-07 | Closed beta readiness review | P1-06 | Human accepts supported devices, privacy/terms, support process, issue severity gate. |
 
-**Phase 1 exit gate:** build/lint/unit/UI tests pass; manual confirmation works on supported devices; reboot/revocation/uncertain outcomes are truthful; beta support process exists.
+**Phase 1 exit gate:** build/lint/unit/UI tests pass; manual confirmation works on each device that is actually approved for the beta; reboot/revocation/uncertain outcomes are truthful; and the beta support process exists. The release record must identify coverage honestly: **Vivo/FuntouchOS real-device verified** only after the founder completes and records the runbook, **stock/Pixel emulator-verified** only after a recorded emulator run, and **Samsung/Xiaomi/Redmi/POCO cloud-device-farm verified** only when a retained cloud result proves it. Any lane without such evidence is **not yet verified** and is excluded from the supported-device list rather than silently treated as physically tested.[1]
+
+## P1-06 Evidence Rules
+
+| Evidence label | What it proves | What it does not prove | Required retained record |
+|---|---|---|---|
+| **Real-device verified** | A named physical device, OS build, and app build completed the stated checklist. | Other models, OS versions, OEM variants, or automation behavior not actually exercised. | Completed device record, redacted screenshots/logs, and pass/fail checklist. |
+| **Emulator-verified** | A named stock/Pixel AOSP emulator profile completed the stated baseline checklist. | OEM battery, autostart, power-management, or firmware behavior. | Emulator profile/API level, command/result, and test artifacts. |
+| **Cloud-device-farm verified** | A retained cloud test result exists for the selected real remote model/OS and test scope. | A vendor-wide claim, or behavior outside the uploaded automation/manual scope. | Provider link/export, model/OS, app commit, test APK, result, and known provider limits. |
+| **Not yet verified** | The device/OEM is deliberately excluded from an evidence claim. | Nothing; it must not appear on the beta supported-device list. | Matrix row with owner and next verification method. |
+
+The first matrix record must start with Vivo/FuntouchOS as **not yet verified** until the founder finishes the physical run. Samsung and Xiaomi/Redmi/POCO do not become supported merely because an emulator passes. Firebase Test Lab may be used as a low-cost real-hardware evidence path only after the current provider catalog exposes an appropriate model and the result is retained; provider availability, capacity, and quota are not guaranteed.[2] [3]
+
+## References
+
+[1]: docs/engineering/security-and-testing.md "Seduligma Security and Testing Specification"
+[2]: https://firebase.google.com/docs/test-lab/usage-quotas-pricing "Firebase Test Lab — Usage levels, quotas, and pricing"
+[3]: https://firebase.google.com/docs/test-lab/android/available-testing-devices "Firebase Test Lab — Available testing devices"
 
 ## Phase 2 — Policy-Gated Core Personal Automation
 
