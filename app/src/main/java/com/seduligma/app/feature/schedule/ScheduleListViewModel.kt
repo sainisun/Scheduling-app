@@ -18,12 +18,16 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class ScheduleListUiState(
     val schedules: List<Schedule> = emptyList(),
+    val totalScheduleCount: Int = 0,
+    val searchQuery: String = "",
+    val selectedFilter: ScheduleListFilter = ScheduleListFilter.ALL,
     val isLoading: Boolean = true,
     val deviceHealth: DeviceHealthReport = DeviceHealthReport(
         exactAlarm = HealthState.LIMITED,
@@ -37,10 +41,21 @@ class ScheduleListViewModel @Inject constructor(
     private val scheduleAlarmRegistrar: ScheduleAlarmRegistrar,
     private val deviceHealthEvaluator: DeviceHealthEvaluator,
 ) : ViewModel() {
-    val uiState: StateFlow<ScheduleListUiState> = scheduleRepository.observeSchedules()
-        .map { schedules ->
+    private val controls = MutableStateFlow(ScheduleListControls())
+
+    val uiState: StateFlow<ScheduleListUiState> = combine(
+        scheduleRepository.observeSchedules(),
+        controls,
+    ) { schedules, currentControls ->
             ScheduleListUiState(
-                schedules = schedules,
+                schedules = ScheduleListFilters.apply(
+                    schedules = schedules,
+                    query = currentControls.searchQuery,
+                    filter = currentControls.selectedFilter,
+                ),
+                totalScheduleCount = schedules.size,
+                searchQuery = currentControls.searchQuery,
+                selectedFilter = currentControls.selectedFilter,
                 isLoading = false,
                 deviceHealth = deviceHealthEvaluator.evaluate(),
             )
@@ -50,6 +65,14 @@ class ScheduleListViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ScheduleListUiState(),
         )
+
+    fun setSearchQuery(query: String) {
+        controls.value = controls.value.copy(searchQuery = query)
+    }
+
+    fun setFilter(filter: ScheduleListFilter) {
+        controls.value = controls.value.copy(selectedFilter = filter)
+    }
 
     fun createDraft(
         title: String,
@@ -128,3 +151,8 @@ class ScheduleListViewModel @Inject constructor(
         }
     }
 }
+
+private data class ScheduleListControls(
+    val searchQuery: String = "",
+    val selectedFilter: ScheduleListFilter = ScheduleListFilter.ALL,
+)
