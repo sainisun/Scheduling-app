@@ -16,6 +16,7 @@ This directory is the implementation layer for the canonical [Android PRD v2.1](
 | 8 | `api-contract.md` | Phase 4 backend contract; no personal-send endpoint. |
 | 9 | `design-system.md` | Android/web visual and honest-status semantics. |
 | 10 | `decisions-and-open-questions.md` | Decisions made here versus human approval required. |
+| 11 | `documentation-summary.md` | Plain-language founder sign-off summary, consistency check, first-build path, and consolidated approvals. |
 
 `onboarding.md` is the concise entry point for a new agent session.
 
