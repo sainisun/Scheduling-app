@@ -7,6 +7,7 @@ enum class ScheduleEventType {
     ACTIVATED,
     PAUSED,
     CANCELLED,
+    ATTEMPTED,
     OUTCOME_RECORDED,
 }
 
