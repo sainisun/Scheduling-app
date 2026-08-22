@@ -20,6 +20,7 @@ This directory is the implementation layer for the canonical [Android PRD v2.1](
 | 12 | `release-and-operations.md` | Canonical CI/CD, beta operations, release, support, and channel-profile rollout process. |
 | 13 | `traceability.md` | Requirement-to-design-to-test acceptance traceability. |
 | 14 | `governance-changelog-2026-08-22.md` | Canonical-entry-point correction, legacy deprecation, and unresolved-scope record. |
+| 15 | `monorepo-structure-and-file-plan.md` | Literal target tree, current-versus-planned files, design-depth assessment, phase gates, and PRD traceability. |
 
 `onboarding.md` is the concise entry point for a new agent session.
 

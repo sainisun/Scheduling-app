@@ -143,3 +143,23 @@ Each channel profile follows the identical Phase 2 gate: distribution decision, 
 All adapters share the same state machine and error taxonomy. None may report delivery, read, or recipient consumption based on UI automation. Valid outcomes remain local evidence only: prepared, final action verified, failed, or uncertain.
 
 Add the following channel-neutral error codes: `CHANNEL_PROFILE_UNAVAILABLE`, `CHANNEL_APP_UNSUPPORTED`, `CHANNEL_APP_VERSION_UNTESTED`, `CHANNEL_SELECTOR_MISMATCH`, `CHANNEL_COMPOSE_UI_NOT_READY`, and `CHANNEL_FINAL_ACTION_UNVERIFIED`. Their terminal state is `blocked`, `failed`, or `uncertain` according to the existing transition table; no adapter may invent a success result.
+
+## 9. File-Level Persistence and Contract Mapping
+
+The tables above are canonical behaviour, but agents need exact implementation mappings before creating entities, DAOs, migrations, and DTOs. The following names and types are authoritative for the first implementation.
+
+| Local Room artifact | Required file | Required fields/types | Notes |
+|---|---|---|---|
+| `ScheduleEntity` | `app/.../data/local/ScheduleEntity.kt` | `id:String`, `version:Long`, `title:String`, `messagePreview:String`, `recipientRouteCiphertext:ByteArray`, `channel:String`, `scheduledAtUtcMs:Long`, `timezoneId:String`, `recurrenceRule:String`, `state:String`, `reasonCode:String?`, `createdAtUtcMs:Long`, `updatedAtUtcMs:Long` | DAO maps to domain `Schedule`; enum values are persisted as canonical uppercase strings. |
+| `ScheduleEventEntity` | `app/.../data/local/ScheduleEventEntity.kt` | `id:String`, `scheduleId:String`, `eventType:String`, `reasonCode:String?`, `channelProfileId:String?`, `channelProfileVersion:String?`, `occurredAtUtcMs:Long`, `redactedMetadataJson:String?` | Immutable append-only row. |
+| `ExecutionLeaseEntity` | `app/.../data/local/ExecutionLeaseEntity.kt` | `leaseId:String`, `token:String`, `scheduleId:String?`, `acquiredAtUtcMs:Long?`, `expiresAtUtcMs:Long?` | `leaseId` is always `local-lane`; DAO enforces one row. |
+| `ChannelProfileCacheEntity` | `app/.../data/local/ChannelProfileCacheEntity.kt` | `id:String`, `channel:String`, `version:String`, `payloadCiphertext:ByteArray`, `signature:String`, `issuedAtUtcMs:Long`, `expiresAtUtcMs:Long`, `verifiedAtUtcMs:Long`, `status:String` | Phase 2 only; no free-form executable payload. |
+
+| Backend artifact | Required Phase 4 file family | Canonical typed fields |
+|---|---|---|
+| Device DTO/entity | `modules/devices/dto/*`, `entities/device.entity.ts` | `id:UUID`, `userId:UUID`, `publicKey:string`, `platform:"ANDROID"`, `appVersion:string`, `status:"ACTIVE"|"REVOKED"`, `lastSeenAt:Date` |
+| Consent DTO/entity | `modules/consents/dto/*`, `entities/device-consent.entity.ts` | `id:UUID`, `deviceId:UUID`, `purpose:ConsentPurpose`, `policyVersion:string`, `granted:boolean`, `recordedAt:Date`, `revokedAt:Date|null` |
+| Sync-event DTO/entity | `modules/sync/dto/*`, `entities/sync-event.entity.ts` | `eventId:UUID`, `aggregateId:UUID`, `version:long`, `type:string`, `payloadClass:"REDACTED_METADATA"`, `redactedPayload:JsonObject` |
+| Channel-profile DTO/entity | `modules/remote-config/dto/*`, `entities/channel-profile.entity.ts` | `id:UUID`, `channel:Channel`, `targetPackage:string`, `versionRange:string`, `selectorSetHash:string`, `audience:JsonObject`, `expiresAt:Date`, `status:ProfileStatus`, `signature:string` |
+
+No migration may invent column names or nullability outside this mapping. Any field needed beyond it requires a documented data-model and migration decision first.

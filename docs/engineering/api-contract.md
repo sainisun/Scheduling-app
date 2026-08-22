@@ -93,3 +93,47 @@ The API must not expose `POST /send`, `POST /execute`, remote accessibility comm
 `SignedChannelProfile` includes the channel, target package, compatible version range, selector-set version/hash, prefill capability, audience, issue/expiry time, signature, and rollback configuration. It does not carry free-form executable code, recipient data, raw content, timing-randomization rules, or remote send commands.
 
 The Telegram Bot API remains documented as a founder-approved alternative option only. If selected later, it requires a new versioned API section, consent/data-flow review, and explicit product decision. No existing endpoint treats it as a fallback for `TelegramAdapter`.
+
+## 6. Concrete DTO Shapes and Module Ownership
+
+The endpoint tables are implemented in Phase 4 only. These exact shapes are sufficient to generate validation DTOs and OpenAPI schemas without inventing property names.
+
+```ts
+type RegisterDeviceRequest = {
+  publicKey: string;
+  platform: "ANDROID";
+  appVersion: string;
+};
+
+type DeviceResponse = {
+  id: string;
+  platform: "ANDROID";
+  appVersion: string;
+  status: "ACTIVE" | "REVOKED";
+  lastSeenAtUtcMs: number | null;
+};
+
+type RecordConsentRequest = {
+  purpose: "SUPPORT_DIAGNOSTICS" | "METADATA_SYNC" | "AUTOMATION_DISCLOSURE";
+  policyVersion: string;
+  granted: boolean;
+};
+
+type SyncEventRequest = {
+  eventId: string;
+  aggregateId: string;
+  version: number;
+  type: string;
+  payloadClass: "REDACTED_METADATA";
+  redactedPayload: Record<string, string | number | boolean>;
+};
+```
+
+| API route group | Future owning backend module | Future web consumer |
+|---|---|---|
+| `/v1/devices*` and device consent | `modules/devices`, `modules/consents` | Customer devices and privacy routes. |
+| `/v1/devices/{id}/sync-*` | `modules/sync` | Customer schedule-metadata view only. |
+| `/v1/remote-config*`, `/v1/admin/channel-profiles*` | `modules/remote-config`, `modules/audit` | Admin profile/release and audit routes. |
+| `/v1/subscription*`, `/v1/billing*` | `modules/subscriptions`, `modules/billing` | Customer billing route. |
+
+Every `POST`, `PATCH`, and `DELETE` request carries an `Idempotency-Key` UUID header. Validation rejects unknown fields, raw content fields, route/recipient fields, credentials, and any command-shaped payload. Backend implementation begins only under the approved Phase 4 plan, except the narrow Phase 2 signed-profile endpoints after that separate gate.

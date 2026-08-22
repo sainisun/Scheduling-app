@@ -42,3 +42,20 @@ This section concerns accessibility of Seduligma’s own interface, not the sepa
 ## 5. Web Dashboard Direction
 
 The Next.js dashboard uses the same semantic states and colour meanings. It uses an application sidebar, workspace/device context, filtered event tables, and a clear “device executes locally” disclosure near every schedule view. The dashboard must not show a remote “Send now” action for personal workflows.
+
+## 6. Future Phase 4 Web Route and Component Plan
+
+The following is a route contract, not permission to build the Next.js app before Phase 4. Every personal-schedule route carries the local-execution disclosure and excludes remote-send controls.
+
+| Route | Screen purpose | Primary shared components |
+|---|---|---|
+| `/sign-in` | OIDC sign-in handoff | `AuthBoundary`, `LoadingState`, `ErrorState`. |
+| `/app/devices` | Registered devices and health summaries | `AppShell`, `DeviceCard`, `HealthStatusBadge`, `EmptyState`. |
+| `/app/schedules` | Consented redacted schedule metadata and lifecycle events | `ScheduleTable`, `ScheduleStateBadge`, `EvidenceTooltip`, `DeviceExecutesLocallyNotice`. |
+| `/app/privacy` | Consent receipts, diagnostic/sync controls, export/delete request entry | `ConsentToggle`, `PrivacyNotice`, `ConfirmationDialog`. |
+| `/app/billing` | Hosted checkout/customer-portal entry and entitlement display | `PlanCard`, `EntitlementMeter`, `ExternalCheckoutNotice`. |
+| `/admin/support` | Consent-aware redacted support cases | `SupportCaseTable`, `RedactionNotice`, `AuditLink`. |
+| `/admin/channel-profiles` | Maker/checker channel-profile lifecycle | `ProfileStatusBadge`, `ApprovalPanel`, `KillSwitchDialog`. |
+| `/admin/audit` | Administrative audit trail | `AuditTable`, `DateRangeFilter`, `EmptyState`. |
+
+`web/src/components/ui/` contains primitive controls; `web/src/components/domain/` contains status badges, notices, tables, and dialogs with product semantics; `web/src/lib/api/` contains generated API client/DTO bindings; and `web/src/lib/auth/` contains OIDC session helpers. All loading, empty, error, blocked, uncertain, and completed states must use the semantic tokens defined above.

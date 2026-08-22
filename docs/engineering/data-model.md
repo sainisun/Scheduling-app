@@ -96,3 +96,38 @@ type ChannelProfile = {
 `Schedule.recipientReference` is channel-specific but always local-only by default. An SMS reference is a user-selected target in a profiled SMS app; an email reference is a user-selected target in a profiled email app. Neither creates permission for protocol-level sending, server delivery receipts, or a backend copy of recipient content.
 
 The local database adds `channel` to `schedule`, `channel_profile_id` and `channel_profile_version` to `schedule_event`, and `channel_profile_cache` for verified signed profiles. The backend remote-config metadata stores profile hashes, lifecycle, approval, audience, and revocation information—not raw selectors in telemetry and not message/recipient data.
+
+## Implementation Shapes
+
+The following nested shapes remove remaining ambiguity for Android entities and Phase 4 DTOs. They are definitions, not permission to build Phase 4 services early.
+
+```ts
+type RecurrenceSpec =
+  | { kind: "ONCE" }
+  | { kind: "DAILY"; intervalDays: number }
+  | { kind: "WEEKLY"; intervalWeeks: number; daysOfWeek: number[] }
+  | { kind: "MONTHLY"; intervalMonths: number; dayOfMonth: number; endOfMonthPolicy: "CLAMP" };
+
+type ScheduleEvent = {
+  id: string;
+  scheduleId: string;
+  eventType: "CREATED" | "ACTIVATED" | "PAUSED" | "CANCELLED" | "ATTEMPTED" | "OUTCOME_RECORDED";
+  reasonCode?: ScheduleReasonCode;
+  localEvidence: LocalEvidence;
+  channelProfileId?: string;
+  channelProfileVersion?: string;
+  occurredAtUtcMs: number;
+  redactedMetadata?: Record<string, string | number | boolean>;
+};
+
+type DeviceHealthReport = {
+  capturedAtUtcMs: number;
+  exactAlarmAllowed: boolean;
+  notificationsAllowed: boolean;
+  targetAppInstalled?: boolean;
+  targetAppVersion?: string;
+  blockerCodes: ScheduleReasonCode[];
+};
+```
+
+`Schedule.recurrence` is represented in Android as `RecurrenceSpec` and is serialised to a versioned JSON column only at the persistence boundary. `routeValue` is encrypted before Room storage; the domain model receives it only in memory after explicit user action. Phase 4 DTOs may carry only `payloadClass:"REDACTED_METADATA"` unless the user has granted a separately named sync purpose.

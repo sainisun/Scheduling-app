@@ -86,6 +86,33 @@ Scheduling-app/
 
 `backend/` and `web/` are repository boundaries, not permission to scaffold or implement commercial functionality early. Until the PRD Phase 4 trigger is approved, an agent may edit only approved documentation/placeholders in those folders and must not create authentication, database, billing, dispatch, dashboard, or production API functionality.
 
+### 3.2 Current and Planned Android Modules
+
+**Reconciliation:** The live Gradle build currently contains only `:app`. Earlier conceptual references to `core/*` and `feature/*` describe the approved **future package/module target**, not modules that exist today. Agents must not create empty Gradle modules merely to match a diagram; extract a module only when an approved implementation slice needs a stable boundary and its tests still pass.
+
+| Gradle module | Current status | Owns | First approved extraction trigger |
+|---|---|---|---|
+| `:app` | Exists now | Application entry, Hilt root, current local scheduler, current Room/SQLCipher, UI, receivers, instrumentation resources | Remains the only module through Phase 1 unless a P1 task proves extraction is needed. |
+| `:core:common` | Planned | Result/error primitives, clock/UUID abstractions, logging/redaction contracts | After Phase 1 when shared pure utilities have two approved consumers. |
+| `:core:domain` | Planned | Canonical models, recurrence/state policies, repository interfaces, use cases | During approved refactor after Phase 1 or before Phase 2 adapter work. |
+| `:core:data` | Planned | Room/SQLCipher, DAOs, repositories, alarm/device/profile implementations | Same approved refactor; no behaviour change allowed in extraction PR. |
+| `:core:testing` | Planned | Fakes, fixtures, test dispatcher, contract-test helpers | When test code is shared by two modules. |
+| `:core:ui` | Planned | Theme/tokens, status components, navigation primitives | When two approved Android features share UI primitives. |
+| `:feature:schedules` | Planned | Editor, list/calendar, lifecycle/history UI/ViewModels | When schedule UI becomes too large for `:app` ownership. |
+| `:feature:device-health` | Planned | Permission/readiness explanation screens | When P1 health UX gains a separate route/use case. |
+| `:feature:automation` | Phase 2 gated | `ExecutionAdapter`, disclosure/consent, profile loading, verified preparation/final action | Only after Phase 2 human policy gate. |
+
+### 3.3 Future Phase 4 Service and Web Boundaries
+
+| Area | Source boundary | Feature responsibility |
+|---|---|---|
+| Node bootstrap/config | `backend/src/main.ts`, `config/`, `common/` | Environment validation, OpenAPI, error format, auth guards, audit/logging contracts. |
+| Identity/device | `backend/src/modules/auth/`, `devices/`, `consents/` | OIDC identity, registered device binding, immutable consent receipts. |
+| Sync/support/config | `backend/src/modules/sync/`, `support/`, `remote-config/`, `audit/` | Redacted metadata sync, diagnostic consent, signed channel profile lifecycle, audit. |
+| Commercial | `backend/src/modules/subscriptions/`, `billing/` | Entitlements and hosted payment-provider references; never personal dispatch. |
+| Customer web | `web/src/app/(app)/devices`, `schedules`, `privacy`, `billing` | Account/device view, consented metadata/status, privacy controls, hosted billing entry. |
+| Admin web | `web/src/app/(admin)/support`, `remote-config`, `audit` | Redacted support workflow, maker/checker config release, audit viewing. |
+
 ## 4. Primary Data Flows
 
 ### 4.1 Local Schedule Creation
