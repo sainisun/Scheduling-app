@@ -31,6 +31,8 @@ class SchedulePlannerScreenTest {
                     deviceHealth = DeviceHealthReport(HealthState.READY, HealthState.READY),
                     onRequestExactAlarm = {},
                     onOpenNotificationSettings = {},
+                    onRequestNotifications = {},
+                    onRefreshDeviceHealth = {},
                     onPause = {},
                     onCancel = {},
                     onActivate = {},
@@ -66,6 +68,8 @@ class SchedulePlannerScreenTest {
                     deviceHealth = DeviceHealthReport(HealthState.READY, HealthState.READY),
                     onRequestExactAlarm = {},
                     onOpenNotificationSettings = {},
+                    onRequestNotifications = {},
+                    onRefreshDeviceHealth = {},
                     onPause = {},
                     onCancel = {},
                     onActivate = {},
@@ -79,5 +83,39 @@ class SchedulePlannerScreenTest {
         composeRule.onNodeWithText("Search title or preview").assertExists()
         composeRule.onNodeWithText("✓ Upcoming").assertExists()
         composeRule.onNodeWithText("Showing 1 of 2 schedules").assertExists()
+    }
+
+    @Test
+    fun deviceHealthShowsExplicitRemediationForDeniedCapabilities() {
+        composeRule.setContent {
+            MaterialTheme {
+                SchedulePlannerScreen(
+                    schedules = emptyList(),
+                    totalScheduleCount = 0,
+                    searchQuery = "",
+                    selectedFilter = ScheduleListFilter.ALL,
+                    isLoading = false,
+                    deviceHealth = DeviceHealthReport(
+                        exactAlarm = HealthState.ACTION_REQUIRED,
+                        notifications = HealthState.LIMITED,
+                    ),
+                    onRequestExactAlarm = {},
+                    onOpenNotificationSettings = {},
+                    onRequestNotifications = {},
+                    onRefreshDeviceHealth = {},
+                    onPause = {},
+                    onCancel = {},
+                    onActivate = {},
+                    onEdit = {},
+                    onSearchQueryChanged = {},
+                    onFilterChanged = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Allow exact alarms").assertExists()
+        composeRule.onNodeWithText("Request notifications").assertExists()
+        composeRule.onNodeWithText("Open notification settings").assertExists()
+        composeRule.onNodeWithText("Refresh device health").assertExists()
     }
 }

@@ -74,6 +74,10 @@ class ScheduleListViewModel @Inject constructor(
         controls.value = controls.value.copy(selectedFilter = filter)
     }
 
+    fun refreshDeviceHealth() {
+        controls.value = controls.value.copy(healthRevision = controls.value.healthRevision + 1)
+    }
+
     fun createDraft(
         title: String,
         messagePreview: String,
@@ -155,4 +159,5 @@ class ScheduleListViewModel @Inject constructor(
 private data class ScheduleListControls(
     val searchQuery: String = "",
     val selectedFilter: ScheduleListFilter = ScheduleListFilter.ALL,
+    val healthRevision: Int = 0,
 )

@@ -1,11 +1,14 @@
 package com.seduligma.app.feature.schedule
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +46,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.seduligma.app.domain.device.DeviceHealthReport
 import com.seduligma.app.domain.device.HealthState
 import com.seduligma.app.domain.model.RecurrenceRule
@@ -60,8 +67,20 @@ fun SchedulePlannerApp() {
     val viewModel: ScheduleListViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { viewModel.refreshDeviceHealth() }
     var showEditor by remember { mutableStateOf(false) }
     var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshDeviceHealth()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(
         topBar = {
@@ -110,6 +129,18 @@ fun SchedulePlannerApp() {
                     },
                 )
             },
+            onRequestNotifications = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        },
+                    )
+                }
+            },
+            onRefreshDeviceHealth = viewModel::refreshDeviceHealth,
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
@@ -164,6 +195,8 @@ internal fun SchedulePlannerScreen(
     deviceHealth: DeviceHealthReport,
     onRequestExactAlarm: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onRequestNotifications: () -> Unit,
+    onRefreshDeviceHealth: () -> Unit,
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
@@ -186,16 +219,20 @@ internal fun SchedulePlannerScreen(
                 ) {
                     Text("Device health", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(deviceHealthMessage(deviceHealth), style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        "Exact alarms: ${healthLabel(deviceHealth.exactAlarm)} · Notifications: ${healthLabel(deviceHealth.notifications)}",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    Text("Exact alarms: ${healthLabel(deviceHealth.exactAlarm)}", style = MaterialTheme.typography.bodySmall)
                     if (deviceHealth.exactAlarm == HealthState.ACTION_REQUIRED) {
                         Button(onClick = onRequestExactAlarm) { Text("Allow exact alarms") }
                     }
+                    Text("Notifications: ${healthLabel(deviceHealth.notifications)}", style = MaterialTheme.typography.bodySmall)
                     if (deviceHealth.notifications != HealthState.READY) {
+                        Text(
+                            "Notifications are needed for manual-confirmation and schedule-ready reminders.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Button(onClick = onRequestNotifications) { Text("Request notifications") }
                         TextButton(onClick = onOpenNotificationSettings) { Text("Open notification settings") }
                     }
+                    TextButton(onClick = onRefreshDeviceHealth) { Text("Refresh device health") }
                 }
             }
         }
