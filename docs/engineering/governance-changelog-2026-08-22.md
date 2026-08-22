@@ -13,8 +13,10 @@ This changelog resolves the prior split between the legacy numbered `docs/00-*` 
 | Valid legacy release/operations content | Migrated to `release-and-operations.md`. |
 | Valid legacy traceability intent | Migrated to `traceability.md`. |
 | Multi-channel product source | Canonical PRD updated to describe shared `ExecutionAdapter` + signed `ChannelProfile` architecture for WhatsApp, Telegram, Messenger, SMS, and Email. |
+| Legacy server-dispatch concept | Permanently removed by founder decision. It is not canonical scope, a future backlog item, or an implicit backend capability. |
+| Repository topology | Founder confirmed one monorepo: `app/`, `backend/`, `web/`, `docs/`, and `.github/`. Backend and web implementation remain Phase 4-gated. |
 | Uniform safety model | Every channel now has the same Phase 2 declaration/disclosure/consent/profile/device-matrix/no-blind-action/truthful-evidence gate. |
 
-## Explicitly Unresolved Founder Decisions
+## Resolved Founder Decisions
 
-The old documentation mentions an Official Business API server-side dispatcher and a two-repository split. Neither concept is merged into canonical scope by this change. Both require founder direction before they become product or repository decisions.
+The former unapproved legacy dispatch concept is permanently removed. The former split-repository assumption is replaced by the confirmed single-monorepo convention. Remaining open product approvals are maintained in `decisions-and-open-questions.md`.

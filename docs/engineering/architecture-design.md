@@ -70,6 +70,22 @@ flowchart LR
 | Auth | Standards-based OIDC/OAuth 2.1 provider plus JWT validation | Provider-neutral, mobile and web compatible authentication. |
 | Observability | Sentry-compatible error tracking, structured logs, metrics | Fast diagnosis without collecting raw content by default. |
 
+### 3.1 Confirmed Single-Monorepo Convention
+
+**Founder decision:** This repository is the sole Seduligma codebase. Android, backend, web, documentation, and CI configuration live together; no separate Android or platform repository is assumed.
+
+```text
+Scheduling-app/
+├── app/                 # Kotlin/Compose Android client; active Phase 0–3 work
+├── backend/             # Node.js API; reserved until Phase 4 approval
+├── web/                 # Next.js customer/admin dashboard; reserved until Phase 4 approval
+├── docs/                # Canonical PRD and engineering suite
+├── .github/workflows/   # Component-aware CI definitions
+└── AGENTS.md            # Agent governance entry point
+```
+
+`backend/` and `web/` are repository boundaries, not permission to scaffold or implement commercial functionality early. Until the PRD Phase 4 trigger is approved, an agent may edit only approved documentation/placeholders in those folders and must not create authentication, database, billing, dispatch, dashboard, or production API functionality.
+
 ## 4. Primary Data Flows
 
 ### 4.1 Local Schedule Creation

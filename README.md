@@ -20,4 +20,16 @@ The currently authorised code path is Phase 1 local scheduler hardening. Phase 2
 
 ## Repository
 
-Android source lives in `app/`; canonical documentation lives in `docs/`. Build and test status is enforced through GitHub Actions. See [`AGENTS.md`](AGENTS.md) for the mandatory coding-agent rules.
+Seduligma is a single monorepo. Android source lives in `app/`; canonical documentation lives in `docs/`; `backend/` reserves the later Node.js API; and `web/` reserves the later Next.js customer/admin dashboard.
+
+```text
+Scheduling-app/
+├── app/                 # Kotlin + Jetpack Compose Android client — active now
+├── backend/             # Node.js API — reserved; implementation begins only in approved Phase 4
+├── web/                 # Next.js dashboard/admin — reserved; implementation begins only in approved Phase 4
+├── docs/                # Canonical PRD and engineering documentation
+├── .github/             # CI workflows and repository automation
+└── AGENTS.md            # Mandatory coding-agent entry rules
+```
+
+Creating `backend/` and `web/` does **not** authorise backend or web feature development before the Phase 4 trigger in the canonical PRD. Build and test status is enforced through GitHub Actions. See [`AGENTS.md`](AGENTS.md) for the mandatory coding-agent rules.

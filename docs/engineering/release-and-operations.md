@@ -13,6 +13,19 @@
 
 Release signing material is stored in CI secret storage or approved external secret management, never in source, issue comments, screenshots, or documentation. The exact signing provider remains a Phase 1 human implementation decision.
 
+### 1.1 Phase 4 Monorepo CI Expansion
+
+The repository is a single monorepo, but CI remains component-specific. Current Android CI remains the only active product pipeline until the Phase 4 commercial-platform trigger is approved.
+
+| Component | Future Phase 4 pipeline | Trigger | Current rule |
+|---|---|---|---|
+| `app/` | Gradle format/lint, unit/UI/instrumentation tests, debug/release artifact checks | Android path changes | Active now. |
+| `backend/` | Node install, typecheck, lint, unit/integration/API-contract tests, dependency/security scan | Backend path changes | Placeholder only; do not implement pipeline or API before Phase 4 approval. |
+| `web/` | Node install, typecheck, lint, unit/component/e2e tests, build, dependency/security scan | Web path changes | Placeholder only; do not implement pipeline or dashboard before Phase 4 approval. |
+| Shared docs/config | Link/reference checks and affected component validation | Docs/shared configuration changes | May run now where tooling exists. |
+
+When Phase 4 begins, workflow path filters and shared contract checks must ensure backend and web changes validate independently while changes to shared API contracts validate all affected components. A monorepo does not make backend or web implementation an earlier product phase.
+
 ## 2. Environments
 
 | Environment | Purpose | Data rule |

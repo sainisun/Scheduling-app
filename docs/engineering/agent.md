@@ -37,6 +37,10 @@ docs/engineering/  # canonical agent-facing documents
 
 New Android code must depend inward: `feature → domain ← data`. Receivers delegate to domain/use-case code; they do not contain business logic. No network or Android framework class appears in pure domain tests.
 
+### Monorepo Boundary
+
+The confirmed repository topology is one monorepo: `app/` for the Android client, `backend/` for the future Node.js API, `web/` for the future Next.js dashboard/admin UI, `docs/` for canonical documents, and `.github/` for automation. Until the founder-approved **Phase 4** trigger, agents may work only in `app/` and approved shared documentation. `backend/` and `web/` are reserved boundaries; adding code, dependencies, authentication, schemas, billing, dashboards, APIs, or component CI there before Phase 4 is a scope violation.
+
 ## 4. Coding and Commit Rules
 
 Use Kotlin naming conventions, immutable state, sealed UI state where appropriate, validated input at boundaries, UTC timestamp storage with IANA timezone IDs, and the canonical names in `data-model.md`. Commit format is `type(scope): concise imperative summary`, such as `feat(schedule): add exact-alarm readiness evaluator`.

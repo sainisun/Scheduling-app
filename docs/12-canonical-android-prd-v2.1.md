@@ -171,7 +171,7 @@ The Android module boundaries are: local domain model and state machine; encrypt
 
 ### 10.2 Backend and Web Platform — Later Commercial Release
 
-The supporting platform uses a **Next.js/TypeScript** customer/admin frontend and a separate **Node.js/TypeScript API** (recommended NestJS + Fastify) with PostgreSQL, Redis, object storage, OIDC authentication, and Razorpay integration for an India-first commercial release.
+The supporting platform remains a later commercial capability, but it has a confirmed place in this same repository: `web/` contains the future **Next.js/TypeScript** customer/admin frontend and `backend/` contains the future **Node.js/TypeScript API** (recommended NestJS + Fastify), PostgreSQL, Redis, object storage, OIDC authentication, and Razorpay integration for an India-first commercial release. Folder reservation does not permit implementation before the Phase 4 trigger.
 
 The backend owns accounts, subscriptions, device registration, consented sync, support diagnostics, signed remote configuration, abuse controls, and administrative audit logs. It does not directly dispatch personal messages from a user’s phone or require an always-on connection to trigger an already-saved local schedule.
 
