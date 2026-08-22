@@ -11,8 +11,10 @@ import com.seduligma.app.data.repository.RoomScheduleEventRepository
 import com.seduligma.app.data.scheduling.AndroidScheduleAlarmRegistrar
 import com.seduligma.app.data.device.AndroidDeviceHealthEvaluator
 import com.seduligma.app.data.notification.AndroidManualConfirmationNotifier
+import com.seduligma.app.data.privacy.RoomLocalDataResetter
 import com.seduligma.app.domain.device.DeviceHealthEvaluator
 import com.seduligma.app.domain.notification.ManualConfirmationNotifier
+import com.seduligma.app.domain.privacy.LocalDataResetter
 import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.repository.ScheduleEventRepository
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
@@ -48,6 +50,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindManualConfirmationNotifier(notifier: AndroidManualConfirmationNotifier): ManualConfirmationNotifier
+
+    @Binds
+    @Singleton
+    abstract fun bindLocalDataResetter(resetter: RoomLocalDataResetter): LocalDataResetter
 }
 
 @Module

@@ -25,7 +25,16 @@ class RoomScheduleRepository @Inject constructor(
     }
 
     override suspend fun updateSchedule(schedule: Schedule) {
-        scheduleDao.upsert(schedule.toEntity())
+        scheduleDao.updateSchedule(
+            scheduleId = schedule.id,
+            title = schedule.title,
+            messagePreview = schedule.messagePreview,
+            scheduledAtEpochMs = schedule.scheduledAt.toEpochMilli(),
+            timezoneId = schedule.timezoneId,
+            recurrence = schedule.recurrence.name,
+            state = schedule.state.name,
+            updatedAtEpochMs = System.currentTimeMillis(),
+        )
     }
 
     override suspend fun updateState(scheduleId: String, state: ScheduleState) {

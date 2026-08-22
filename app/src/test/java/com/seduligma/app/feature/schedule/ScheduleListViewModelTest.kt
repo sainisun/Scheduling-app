@@ -10,6 +10,7 @@ import com.seduligma.app.domain.model.ScheduleEvent
 import com.seduligma.app.domain.model.ScheduleEventType
 import com.seduligma.app.domain.model.ScheduleReasonCode
 import com.seduligma.app.domain.model.ScheduleState
+import com.seduligma.app.domain.privacy.LocalDataResetter
 import com.seduligma.app.domain.repository.ScheduleEventRepository
 import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
@@ -78,13 +79,27 @@ class ScheduleListViewModelTest {
         assertEquals(ScheduleReasonCode.EXACT_ALARM_DENIED, events.events.value.single().reasonCode)
     }
 
+    @Test
+    fun `erasing local data delegates only to the explicit privacy resetter`() = runTest {
+        val repository = FakeScheduleRepository()
+        val resetter = FakeLocalDataResetter()
+        val viewModel = viewModel(repository, localDataResetter = resetter)
+
+        viewModel.eraseLocalData()
+
+        advanceUntilIdle()
+        assertEquals(1, resetter.eraseRequests)
+    }
+
     private fun viewModel(
         repository: FakeScheduleRepository,
         eventRepository: FakeScheduleEventRepository = FakeScheduleEventRepository(),
         alarmRegistrar: FakeScheduleAlarmRegistrar = FakeScheduleAlarmRegistrar(),
+        localDataResetter: FakeLocalDataResetter = FakeLocalDataResetter(),
     ) = ScheduleListViewModel(
         repository,
         eventRepository,
+        localDataResetter,
         alarmRegistrar,
         FakeDeviceHealthEvaluator(),
     )
@@ -140,6 +155,14 @@ private class FakeScheduleAlarmRegistrar(
 ) : ScheduleAlarmRegistrar {
     override fun register(schedule: Schedule): AlarmRegistrationResult = result
     override fun cancel(scheduleId: String) = Unit
+}
+
+private class FakeLocalDataResetter : LocalDataResetter {
+    var eraseRequests = 0
+
+    override suspend fun eraseLocalData() {
+        eraseRequests += 1
+    }
 }
 
 private class FakeDeviceHealthEvaluator : DeviceHealthEvaluator {

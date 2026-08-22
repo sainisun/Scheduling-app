@@ -13,4 +13,7 @@ interface ScheduleEventDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(event: ScheduleEventEntity)
+
+    @Query("DELETE FROM schedule_events")
+    suspend fun deleteAll()
 }

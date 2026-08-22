@@ -76,6 +76,7 @@ fun SchedulePlannerApp() {
     ) { viewModel.refreshDeviceHealth() }
     var showEditor by remember { mutableStateOf(false) }
     var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
+    var showEraseConfirmation by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -145,6 +146,7 @@ fun SchedulePlannerApp() {
                 }
             },
             onRefreshDeviceHealth = viewModel::refreshDeviceHealth,
+            onRequestLocalReset = { showEraseConfirmation = true },
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
@@ -186,6 +188,27 @@ fun SchedulePlannerApp() {
             },
         )
     }
+
+    if (showEraseConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showEraseConfirmation = false },
+            title = { Text("Erase local data?") },
+            text = {
+                Text(
+                    "This permanently removes local schedules and activity history from this device and cancels their alarms. It cannot be undone.",
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.eraseLocalData()
+                    showEraseConfirmation = false
+                }) { Text("Erase local data") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEraseConfirmation = false }) { Text("Keep data") }
+            },
+        )
+    }
 }
 
 @Composable
@@ -202,6 +225,7 @@ internal fun SchedulePlannerScreen(
     onOpenNotificationSettings: () -> Unit,
     onRequestNotifications: () -> Unit,
     onRefreshDeviceHealth: () -> Unit,
+    onRequestLocalReset: () -> Unit = {},
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
@@ -238,6 +262,7 @@ internal fun SchedulePlannerScreen(
                         TextButton(onClick = onOpenNotificationSettings) { Text("Open notification settings") }
                     }
                     TextButton(onClick = onRefreshDeviceHealth) { Text("Refresh device health") }
+                    TextButton(onClick = onRequestLocalReset) { Text("Erase local schedules and history") }
                 }
             }
         }

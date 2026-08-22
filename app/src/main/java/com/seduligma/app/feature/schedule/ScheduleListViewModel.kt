@@ -14,6 +14,7 @@ import com.seduligma.app.domain.model.ScheduleReasonCode
 import com.seduligma.app.domain.model.ScheduleState
 import com.seduligma.app.domain.repository.ScheduleEventRepository
 import com.seduligma.app.domain.repository.ScheduleRepository
+import com.seduligma.app.domain.privacy.LocalDataResetter
 import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +46,7 @@ data class ScheduleListUiState(
 class ScheduleListViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val scheduleEventRepository: ScheduleEventRepository,
+    private val localDataResetter: LocalDataResetter,
     private val scheduleAlarmRegistrar: ScheduleAlarmRegistrar,
     private val deviceHealthEvaluator: DeviceHealthEvaluator,
 ) : ViewModel() {
@@ -85,6 +87,10 @@ class ScheduleListViewModel @Inject constructor(
 
     fun refreshDeviceHealth() {
         controls.value = controls.value.copy(healthRevision = controls.value.healthRevision + 1)
+    }
+
+    fun eraseLocalData() {
+        viewModelScope.launch { localDataResetter.eraseLocalData() }
     }
 
     fun createDraft(
