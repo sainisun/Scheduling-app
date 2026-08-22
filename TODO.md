@@ -6,7 +6,8 @@
 - [x] Add timezone-aware daily, weekly, and monthly recurrence calculation with unit coverage.
 - [x] Add exact-alarm registration with transparent waiting and permission-required schedule states.
 - [x] Encrypt local Room schedule storage with SQLCipher and a Keystore-backed passphrase.
-- [ ] Implement encrypted Room schedule persistence and migration tests.
+- [x] Implement encrypted Room schedule persistence and migration tests.
+- [x] Add explicit local-data reset, alarm cancellation, notification clearing, and Android backup exclusion coverage.
 - [x] Implement timezone-aware create/edit/pause/cancel schedule workflows.
 - [ ] Implement AlarmManager/WorkManager registration and permission-health evaluator.
 - [ ] Build the Node.js mobile API contract, OIDC authentication, device registration, and safe sync outbox.
