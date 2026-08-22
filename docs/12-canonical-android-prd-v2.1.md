@@ -25,7 +25,7 @@ The product is inspired by the user problem addressed by SKEDit: an Android user
 
 Existing users of personal scheduling apps need a way to plan repetitive communications without repeatedly remembering a future time. They also need a reliable explanation when an Android permission, battery restriction, locked screen, device state, or application UI condition prevents an action.
 
-DIGMA Growth wants to offer this category of product to its clients under its own brand, with control over product roadmap, customer support, subscription plans, diagnostics, and data governance. The initial product must solve the local Android scheduling problem before expanding into agency tooling, dashboards, official Business API workflows, or multi-channel messaging.
+ DIGMA Growth wants to offer this category of product to its clients under its own brand, with control over product roadmap, customer support, subscription plans, diagnostics, and data governance. The initial product must solve the local Android scheduling problem before expanding into commercial dashboards or backend billing. After the local reliability beta, the core product expands through a policy-gated, device-local multi-channel execution architecture.
 
 ## 3. Product Principles and Non-Negotiable Boundaries
 
@@ -55,7 +55,7 @@ Beta 1 is deliberately narrow. It supports **one Android device, text-only conte
 
 ### 5.2 Excluded from Beta 1
 
-The following are separate release gates: WhatsApp Groups, Broadcast Lists, Status posting, CSV imports, send lists, media attachments, templates, merge fields, automatic replies, AI features, multi-channel support, web dashboard, billing, user account sync, super-admin panel, remote selector configuration, and PIN/password Auto-Unlock.
+The following are separate release gates: WhatsApp Groups, Broadcast Lists, Status posting, CSV imports, send lists, media attachments, templates, merge fields, automatic replies, AI features, multi-channel execution, web dashboard, billing, user account sync, super-admin panel, remote selector configuration, and PIN/password Auto-Unlock.
 
 | Capability | Planned release gate | Why it is excluded from Beta 1 |
 |---|---|---|
@@ -65,6 +65,14 @@ The following are separate release gates: WhatsApp Groups, Broadcast Lists, Stat
 | AI drafting | Later release | Requires quota, data-handling, and user-consent requirements. |
 | AI-sent reply | Out of scope | Autonomous initiation/planning/execution is prohibited for non-accessibility-tool apps using AccessibilityService.[1] |
 | Dashboard, billing, backend account system | Commercial-release phase | Must not block proof that the local scheduler works. |
+
+### 5.3 Approved Post-Beta Channel Architecture
+
+After Beta 1, personal messaging channels use one **policy-gated, local Accessibility execution architecture**. The planned channels are WhatsApp, Telegram, Messenger, SMS through a separately profiled SMS application, and Email through a separately profiled email application. They do not use a native SMS send exception, direct email/OAuth send exception, or server-side personal dispatcher.
+
+Each target application is released only through a signed, versioned `ChannelProfile` containing its approved package/version compatibility, selector-set version, prefill capability, expiry, rollout audience, and kill-switch scope. Every profile passes the same Phase 2 distribution/declaration/disclosure/consent/device-matrix/no-blind-action/truthful-evidence gate. A uniform mechanism does not require every app profile to launch on the same day.
+
+The Telegram Bot API is a documented non-default future alternative. It may be considered only after a founder-approved product, consent, data-flow, and API-contract decision; it is never silently substituted for Telegram local automation.
 
 ## 6. Lock-Handling Model
 
@@ -114,10 +122,10 @@ The canonical schedule state machine is:
 
 | ID | Requirement | Acceptance criterion |
 |---|---|---|
-| FR-12 | Implement the manual-confirmation default and the policy-gated prefilled-chat execution path. | **Beta 1:** At due time, the app posts an action notification; the user unlocks manually and taps the action. **Phase 2:** when an automation attempt is enabled and the policy gate has passed, first open the recipient chat through WhatsApp’s documented click-to-chat/pre-filled-message route (for example, a `wa.me` URL or equivalent resolved Android intent) so the target chat and draft text are prefilled. WhatsApp documents that click-to-chat opens the chat and a pre-filled message appears in the text field; it does **not** send the message.[8] The implementation must verify that the expected target app/chat/draft state is actually present before any final action. |
+| FR-12 | Implement the manual-confirmation default and the policy-gated channel-pluggable prefill/execution path. | **Beta 1:** At due time, the app posts an action notification; the user unlocks manually and taps the action. **Phase 2:** an approved `ExecutionAdapter` resolves the user-selected channel through an approved `ChannelProfile`. WhatsApp first uses the documented click-to-chat/pre-filled-message route where compatible; comparable verified prefill/compose preparation is used only where a target application profile supports it. The expected target app, recipient route, and draft/compose state must be verified before any final action. WhatsApp documents that click-to-chat opens a chat with a pre-filled message but does not itself send it.[8] |
 | FR-13 | Display locked-device state honestly. | Without a supported user-selected lock tier, a locked phone results in `blocked`/manual confirmation—not a silent bypass. |
 | FR-14 | Accessibility capability may only be implemented and enabled after policy gate approval. | Before any real-user automation: the distribution path is selected; Play declaration is complete where relevant; prominent in-app disclosure and affirmative consent are implemented; data-safety statement is accurate; a reviewer video is prepared; the supported-device matrix is approved; and Android/Google Play compliance review has signed off.[1] |
-| FR-15 | Use Accessibility only for the smallest necessary final interaction after verified prefilled-chat state. | Prefilling reduces UI traversal, contact-search, and text-entry fragility. It **does not remove AccessibilityService policy obligations** when the service still inspects screen content or performs the final action on the user’s behalf. The app must retain declaration, prominent disclosure, affirmative consent, static user-defined script, and data-use requirements.[1] |
+| FR-15 | Use Accessibility only for the smallest necessary final interaction after verified channel preparation state. | The shared `ExecutionAdapter` applies the same static, user-defined, channel-specific script and safe-abort logic to WhatsApp, Telegram, Messenger, SMS-app, and Email-app profiles. Preparation reduces UI traversal only where an approved profile supports it. It **does not remove AccessibilityService policy obligations** when the service still inspects screen content or performs the final action on the user’s behalf. The app must retain declaration, prominent disclosure, affirmative consent, static user-defined script, and data-use requirements.[1] |
 | FR-16 | Abort safely on unexpected target UI state. | Missing expected UI evidence results in `failed` or `uncertain`. The product must not use blind coordinate tapping as a general fallback. |
 | FR-17 | Define local verification evidence. | The app distinguishes `attempting`, `UI-verified`, `completed`, `failed`, and `uncertain`. It does not call local UI completion “delivered” or “read.” |
 
@@ -159,7 +167,7 @@ The canonical schedule state machine is:
 
 The Android application uses **Kotlin**, **Jetpack Compose**, **Hilt**, encrypted **Room/SQLCipher**, **AlarmManager** for exact user-visible scheduling where granted, and **WorkManager** for non-exact sync, cleanup, reconciliation, and diagnostics. WorkManager is not used as a precise trigger mechanism.[5]
 
-The Android module boundaries are: local domain model and state machine; encrypted persistence; recurrence calculator; alarm-registration abstraction; device-health evaluator; schedule editor/list/calendar UI; notification and reboot receivers; and **Phase 2 policy-gated execution adapters**. The first adapter must prefer a verified WhatsApp click-to-chat/pre-filled-message route to minimise UI traversal, then use Accessibility only for the smallest necessary final action after required disclosures and consent.
+The Android module boundaries are: local domain model and state machine; encrypted persistence; recurrence calculator; alarm-registration abstraction; device-health evaluator; schedule editor/list/calendar UI; notification and reboot receivers; and **Phase 2 policy-gated channel-pluggable execution adapters**. The shared `ExecutionAdapter` interface has separately approved WhatsApp, Telegram, Messenger, SMS-app, and Email-app implementations. Each implementation uses a signed `ChannelProfile`, checks target app/version/readiness, verifies expected UI state, and aborts safely when evidence is absent. WhatsApp prefers a verified click-to-chat/pre-filled-message route where compatible; no channel receives a native protocol-send exception.
 
 ### 10.2 Backend and Web Platform — Later Commercial Release
 
@@ -197,7 +205,7 @@ Before any AccessibilityService capability is developed, the team must choose an
 |---|---|---|
 | **Phase 0 — Current foundation** | Kotlin/Compose, encrypted local store, schedule lifecycle, recurrence, exact-alarm readiness, reboot recovery, CI. | Build, tests, lint, and debug APK pass. |
 | **Phase 1 — Closed Beta 1: local scheduler** | Text-only, single-recipient, local scheduling; Ask Me Before Sending; device-health UX; supported-device matrix. | Real-device beta meets truthful-state, persistence, recovery, and manual-confirmation criteria. |
-| **Phase 2 — Core product: policy-gated personal automation** | Distribution decision, Accessibility declaration/disclosure/consent, reviewer video, supported-device matrix, signed feature flag, verified prefilled-chat intent, narrow final-action Accessibility flow, device testing, and support diagnostics. | The automation feature passes policy, security, UI-state verification, no-blind-action, device-matrix, and controlled-beta gates. Commercial backend is **not** a prerequisite. |
+| **Phase 2 — Core product: policy-gated personal automation** | Distribution decision, Accessibility declaration/disclosure/consent, reviewer video, supported-device matrix, signed `ChannelProfile` loading, shared `ExecutionAdapter`, verified channel preparation, narrow final-action flow, channel-by-channel device testing, and support diagnostics. WhatsApp, Telegram, Messenger, SMS-app, and Email-app profiles follow the identical gate; they may release independently only after passing it. | Each enabled channel profile passes policy, security, UI-state verification, no-blind-action, device-matrix, signed-config, truthful-evidence, and controlled-beta gates. Commercial backend is **not** a prerequisite. |
 | **Phase 3 — Selected feature expansion** | Templates, calendar refinement, media, CSV, groups, Status, or deterministic rules—one separately tested slice at a time. | Each feature’s acceptance criteria and supported-device/UI compatibility evidence pass. |
 | **Phase 4 — Commercial platform** | OIDC account, consented sync, Razorpay, customer dashboard, admin controls, subscription plans, and support operations. | Security, privacy, billing, and operational readiness pass. |
 | **Phase 5 — Tier D PIN/password Auto-Unlock pilot** | Feature-flagged advanced lock-handling pilot only if still justified after Phase 2 evidence. | Full Tier D threat-model, compatibility, distribution, recovery, and independent security/legal gates pass. |
@@ -222,7 +230,7 @@ The following are intentionally unresolved, not hidden assumptions:
 4. Confirm the commercial release region, legal entity, privacy jurisdiction, and Razorpay onboarding owner.
 5. Confirm the Phase 2 scope and supported-device matrix for the prefilled-chat plus narrow final-action workflow; verify behavior with WhatsApp versions under the applicable device test policy.
 6. Decide if/when Tier D is worth the security, support, and distribution risk; neither Beta 1 nor Phase 2 depends on it.
-7. Define feature-specific acceptance criteria before adding groups, Status, bulk flows, auto-replies, media, or multi-channel functionality.
+7. Define feature-specific acceptance criteria before adding groups, Status, bulk flows, auto-replies, or media; multi-channel execution itself follows the Phase 2 shared `ExecutionAdapter` and per-profile gate.
 
 ## References
 

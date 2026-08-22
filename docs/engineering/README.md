@@ -17,6 +17,9 @@ This directory is the implementation layer for the canonical [Android PRD v2.1](
 | 9 | `design-system.md` | Android/web visual and honest-status semantics. |
 | 10 | `decisions-and-open-questions.md` | Decisions made here versus human approval required. |
 | 11 | `documentation-summary.md` | Plain-language founder sign-off summary, consistency check, first-build path, and consolidated approvals. |
+| 12 | `release-and-operations.md` | Canonical CI/CD, beta operations, release, support, and channel-profile rollout process. |
+| 13 | `traceability.md` | Requirement-to-design-to-test acceptance traceability. |
+| 14 | `governance-changelog-2026-08-22.md` | Canonical-entry-point correction, legacy deprecation, and unresolved-scope record. |
 
 `onboarding.md` is the concise entry point for a new agent session.
 
