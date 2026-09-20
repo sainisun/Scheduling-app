@@ -5,9 +5,7 @@ import java.time.Instant
 enum class ScheduleState {
     DRAFT,
     NEEDS_PERMISSION,
-    READY,
     WAITING,
-    AWAITING_USER,
     ATTEMPTING,
     COMPLETED,
     FAILED,

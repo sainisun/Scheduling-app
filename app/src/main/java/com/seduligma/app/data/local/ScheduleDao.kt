@@ -14,6 +14,9 @@ interface ScheduleDao {
     @Query("SELECT * FROM schedules")
     suspend fun getAll(): List<ScheduleEntity>
 
+    @Query("SELECT * FROM schedules WHERE id = :scheduleId LIMIT 1")
+    suspend fun getById(scheduleId: String): ScheduleEntity?
+
     @Query("SELECT * FROM schedules WHERE state IN (:states) ORDER BY scheduledAtEpochMs ASC")
     suspend fun getByStates(states: List<String>): List<ScheduleEntity>
 

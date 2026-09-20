@@ -91,6 +91,21 @@ class ScheduleListViewModelTest {
         assertEquals(1, resetter.eraseRequests)
     }
 
+    @Test
+    fun `confirming one-time schedule records user evidence and completes`() = runTest {
+        val repository = FakeScheduleRepository()
+        val events = FakeScheduleEventRepository()
+        val viewModel = viewModel(repository, events)
+        val schedule = schedule(id = "schedule-3", state = ScheduleState.ATTEMPTING)
+        repository.createDraft(schedule)
+
+        viewModel.confirmSchedule(schedule)
+        advanceUntilIdle()
+
+        assertEquals(ScheduleState.COMPLETED, repository.schedules.value.single().state)
+        assertEquals(LocalEvidence.USER_CONFIRMED, events.events.value.single().localEvidence)
+    }
+
     private fun viewModel(
         repository: FakeScheduleRepository,
         eventRepository: FakeScheduleEventRepository = FakeScheduleEventRepository(),
@@ -120,6 +135,9 @@ private class FakeScheduleRepository : ScheduleRepository {
     val schedules = MutableStateFlow<List<Schedule>>(emptyList())
 
     override fun observeSchedules(): Flow<List<Schedule>> = schedules
+
+    override suspend fun getSchedule(scheduleId: String): Schedule? =
+        schedules.value.firstOrNull { it.id == scheduleId }
 
     override suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule> =
         schedules.value.filter { it.state in states }
