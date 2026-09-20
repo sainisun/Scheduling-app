@@ -131,7 +131,7 @@ class SchedulePlannerScreenTest {
             scheduledAt = Instant.parse("2030-01-01T09:00:00Z"),
             timezoneId = "UTC",
             recurrence = RecurrenceRule.ONCE,
-            state = ScheduleState.AWAITING_USER,
+            state = ScheduleState.ATTEMPTING,
         )
         composeRule.setContent {
             MaterialTheme {

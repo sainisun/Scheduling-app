@@ -17,6 +17,7 @@ import com.seduligma.app.domain.repository.ScheduleRepository
 import com.seduligma.app.domain.privacy.LocalDataResetter
 import com.seduligma.app.domain.scheduling.AlarmRegistrationResult
 import com.seduligma.app.domain.scheduling.ScheduleAlarmRegistrar
+import com.seduligma.app.domain.scheduling.RecurrenceCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -169,6 +170,16 @@ class ScheduleListViewModel @Inject constructor(
 
     fun activateSchedule(schedule: Schedule) {
         viewModelScope.launch {
+            if (deviceHealthEvaluator.evaluate().notifications != HealthState.READY) {
+                scheduleRepository.updateState(schedule.id, ScheduleState.NEEDS_PERMISSION)
+                recordEvent(
+                    schedule.id,
+                    ScheduleEventType.OUTCOME_RECORDED,
+                    LocalEvidence.NONE,
+                    ScheduleReasonCode.NOTIFICATION_DENIED,
+                )
+                return@launch
+            }
             when (scheduleAlarmRegistrar.register(schedule)) {
                 AlarmRegistrationResult.REGISTERED -> {
                     scheduleRepository.updateState(schedule.id, ScheduleState.WAITING)
@@ -183,6 +194,40 @@ class ScheduleListViewModel @Inject constructor(
                         ScheduleReasonCode.EXACT_ALARM_DENIED,
                     )
                 }
+            }
+        }
+    }
+
+    fun confirmSchedule(schedule: Schedule) {
+        viewModelScope.launch {
+            if (schedule.state != ScheduleState.ATTEMPTING) return@launch
+
+            recordEvent(
+                schedule.id,
+                ScheduleEventType.OUTCOME_RECORDED,
+                LocalEvidence.USER_CONFIRMED,
+            )
+            val nextOccurrence = RecurrenceCalculator.nextOccurrenceAfter(
+                initialOccurrence = schedule.scheduledAt,
+                timezoneId = schedule.timezoneId,
+                recurrence = schedule.recurrence,
+                after = Instant.now(),
+            )
+            if (nextOccurrence == null) {
+                scheduleRepository.updateState(schedule.id, ScheduleState.COMPLETED)
+                return@launch
+            }
+
+            val nextSchedule = schedule.copy(
+                scheduledAt = nextOccurrence,
+                state = ScheduleState.DRAFT,
+            )
+            scheduleRepository.updateSchedule(nextSchedule)
+            when (scheduleAlarmRegistrar.register(nextSchedule)) {
+                AlarmRegistrationResult.REGISTERED ->
+                    scheduleRepository.updateState(schedule.id, ScheduleState.WAITING)
+                AlarmRegistrationResult.EXACT_ALARM_PERMISSION_REQUIRED ->
+                    scheduleRepository.updateState(schedule.id, ScheduleState.NEEDS_PERMISSION)
             }
         }
     }

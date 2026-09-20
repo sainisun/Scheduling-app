@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 interface ScheduleRepository {
     fun observeSchedules(): Flow<List<Schedule>>
 
+    suspend fun getSchedule(scheduleId: String): Schedule?
+
     suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule>
 
     suspend fun createDraft(schedule: Schedule)

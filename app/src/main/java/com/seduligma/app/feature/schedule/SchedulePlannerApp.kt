@@ -150,6 +150,7 @@ fun SchedulePlannerApp() {
             onPause = viewModel::pauseSchedule,
             onCancel = viewModel::cancelSchedule,
             onActivate = viewModel::activateSchedule,
+            onConfirm = viewModel::confirmSchedule,
             onEdit = { schedule ->
                 editingSchedule = schedule
                 showEditor = true
@@ -229,6 +230,7 @@ internal fun SchedulePlannerScreen(
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
+    onConfirm: (Schedule) -> Unit = {},
     onEdit: (Schedule) -> Unit,
     onSearchQueryChanged: (String) -> Unit,
     onFilterChanged: (ScheduleListFilter) -> Unit,
@@ -311,6 +313,7 @@ internal fun SchedulePlannerScreen(
                 onPause = onPause,
                 onCancel = onCancel,
                 onActivate = onActivate,
+                onConfirm = onConfirm,
                 onEdit = onEdit,
             )
         }
@@ -370,6 +373,7 @@ private fun ScheduleCard(
     onPause: (String) -> Unit,
     onCancel: (String) -> Unit,
     onActivate: (Schedule) -> Unit,
+    onConfirm: (Schedule) -> Unit,
     onEdit: (Schedule) -> Unit,
 ) {
     val localTime = schedule.scheduledAt.atZone(ZoneId.of(schedule.timezoneId)).format(displayFormatter)
@@ -385,11 +389,12 @@ private fun ScheduleCard(
                 onClick = {},
                 label = { Text(schedule.state.name.lowercase().replace('_', ' ')) },
             )
-            if (schedule.state == ScheduleState.AWAITING_USER) {
+            if (schedule.state == ScheduleState.ATTEMPTING) {
                 Text(
                     "Manual confirmation is required. Review this draft yourself; Seduligma will not send anything automatically.",
                     style = MaterialTheme.typography.bodySmall,
                 )
+                Button(onClick = { onConfirm(schedule) }) { Text("Mark as reviewed") }
             }
             if (schedule.state in setOf(ScheduleState.DRAFT, ScheduleState.NEEDS_PERMISSION, ScheduleState.PAUSED)) {
                 Button(onClick = { onActivate(schedule) }) { Text("Activate") }

@@ -19,14 +19,17 @@ class ScheduleDueHandler @Inject constructor(
     private val manualConfirmationNotifier: ManualConfirmationNotifier,
 ) {
     suspend fun handleDueSchedule(scheduleId: String) {
+        val schedule = scheduleRepository.getSchedule(scheduleId) ?: return
+        if (schedule.state != ScheduleState.WAITING) return
+
         when (manualConfirmationNotifier.showScheduleReady(scheduleId)) {
             ManualConfirmationNotificationResult.POSTED -> {
-                scheduleRepository.updateState(scheduleId, ScheduleState.AWAITING_USER)
+                scheduleRepository.updateState(scheduleId, ScheduleState.ATTEMPTING)
                 scheduleEventRepository.recordEvent(
                     ScheduleEvent(
                         id = UUID.randomUUID().toString(),
                         scheduleId = scheduleId,
-                        eventType = ScheduleEventType.OUTCOME_RECORDED,
+                        eventType = ScheduleEventType.ATTEMPTED,
                         localEvidence = LocalEvidence.NOTIFICATION_POSTED,
                         occurredAt = Instant.now(),
                     ),

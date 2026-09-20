@@ -17,6 +17,9 @@ class RoomScheduleRepository @Inject constructor(
     override fun observeSchedules(): Flow<List<Schedule>> =
         scheduleDao.observeAll().map { schedules -> schedules.map(ScheduleEntity::toDomain) }
 
+    override suspend fun getSchedule(scheduleId: String): Schedule? =
+        scheduleDao.getById(scheduleId)?.toDomain()
+
     override suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule> =
         scheduleDao.getByStates(states.map(ScheduleState::name)).map(ScheduleEntity::toDomain)
 
@@ -53,8 +56,15 @@ private fun ScheduleEntity.toDomain(): Schedule = Schedule(
     scheduledAt = Instant.ofEpochMilli(scheduledAtEpochMs),
     timezoneId = timezoneId,
     recurrence = RecurrenceRule.valueOf(recurrence),
-    state = ScheduleState.valueOf(state),
+    state = state.toScheduleState(),
 )
+
+private fun String.toScheduleState(): ScheduleState = when (this) {
+    // Compatibility for pre-canonical Beta-1 rows written by earlier builds.
+    "READY" -> ScheduleState.DRAFT
+    "AWAITING_USER" -> ScheduleState.ATTEMPTING
+    else -> ScheduleState.valueOf(this)
+}
 
 private fun Schedule.toEntity(): ScheduleEntity {
     val now = System.currentTimeMillis()

@@ -24,7 +24,7 @@ class ScheduleDueHandlerTest {
 
         handler.handleDueSchedule("schedule-1")
 
-        assertEquals(listOf("schedule-1" to ScheduleState.AWAITING_USER), repository.updatedStates)
+        assertEquals(listOf("schedule-1" to ScheduleState.ATTEMPTING), repository.updatedStates)
         assertEquals(listOf("schedule-1"), notifier.notifiedScheduleIds)
         assertEquals(1, eventRepository.recordedEvents.size)
         assertEquals(com.seduligma.app.domain.model.LocalEvidence.NOTIFICATION_POSTED, eventRepository.recordedEvents.single().localEvidence)
@@ -42,10 +42,35 @@ class ScheduleDueHandlerTest {
         assertEquals(listOf("schedule-2" to ScheduleState.NEEDS_PERMISSION), repository.updatedStates)
         assertEquals(com.seduligma.app.domain.model.ScheduleReasonCode.NOTIFICATION_DENIED, eventRepository.recordedEvents.single().reasonCode)
     }
+
+    @Test
+    fun `stale alarm for a non-waiting schedule is ignored`() = runTest {
+        val repository = RecordingScheduleRepository(state = ScheduleState.CANCELLED)
+        val eventRepository = RecordingScheduleEventRepository()
+        val notifier = RecordingManualConfirmationNotifier()
+
+        ScheduleDueHandler(repository, eventRepository, notifier).handleDueSchedule("schedule-3")
+
+        assertEquals(emptyList<String>(), notifier.notifiedScheduleIds)
+        assertEquals(emptyList<Pair<String, ScheduleState>>(), repository.updatedStates)
+        assertEquals(emptyList<ScheduleEvent>(), eventRepository.recordedEvents)
+    }
 }
 
-private class RecordingScheduleRepository : ScheduleRepository {
+private class RecordingScheduleRepository(
+    private val state: ScheduleState = ScheduleState.WAITING,
+) : ScheduleRepository {
     val updatedStates = mutableListOf<Pair<String, ScheduleState>>()
+
+    override suspend fun getSchedule(scheduleId: String): Schedule? = Schedule(
+        id = scheduleId,
+        title = "Test",
+        messagePreview = "Test",
+        scheduledAt = Instant.parse("2026-01-01T00:00:00Z"),
+        timezoneId = "UTC",
+        recurrence = com.seduligma.app.domain.model.RecurrenceRule.ONCE,
+        state = state,
+    )
 
     override fun observeSchedules(): Flow<List<Schedule>> = emptyFlow()
     override suspend fun getSchedulesByStates(states: Set<ScheduleState>): List<Schedule> = emptyList()
